@@ -172,7 +172,13 @@ export class MisumiAdapter implements StoreAdapter {
       20_000,
     );
     addToCart.click();
-    await this.waitForElement(targetDocument, 'a[href="/order/cart"]', 20_000);
+    // The header always has a cart link. Wait for the link shown only after MISUMI
+    // confirms that the requested items were added.
+    await this.waitForElement(
+      targetDocument,
+      'a[href="/order/cart"][class*="LinkButton_"]',
+      20_000,
+    );
     targetDocument.location.assign(this.getCartUrl());
     return rows.length;
   }

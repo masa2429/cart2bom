@@ -106,9 +106,11 @@ describe("MisumiAdapter", () => {
 
   it("一括入力の処理完了を待ってカートへ追加する", async () => {
     document.body.innerHTML = `
+      <a href="/order/cart">カート</a>
       <textarea data-testid="excel-copy-input"></textarea>
       <button data-testid="next-button" disabled>次へ</button>
     `;
+    let successLinkAdded = false;
     const textarea = document.querySelector<HTMLTextAreaElement>("textarea");
     const next = document.querySelector<HTMLButtonElement>('[data-testid="next-button"]');
     textarea?.addEventListener("input", () => next?.removeAttribute("disabled"));
@@ -136,9 +138,14 @@ describe("MisumiAdapter", () => {
           const addToCart = document.createElement("button");
           addToCart.dataset.testid = "add-to-cart-button";
           addToCart.addEventListener("click", () => {
-            const cartLink = document.createElement("a");
-            cartLink.href = "/order/cart";
-            document.body.append(cartLink);
+            window.setTimeout(() => {
+              const cartLink = document.createElement("a");
+              cartLink.href = "/order/cart";
+              cartLink.className = "LinkButton_normalize__fixture";
+              cartLink.textContent = "カートを見る";
+              document.body.append(cartLink);
+              successLinkAdded = true;
+            }, 10);
           });
           document.body.append(addToCart);
         });
@@ -155,6 +162,7 @@ describe("MisumiAdapter", () => {
     )).resolves.toBe(1);
     navigationWarning.mockRestore();
     expect(textarea?.value).toBe("DR1-2000\t1\t小原歯車工業");
+    expect(successLinkAdded).toBe(true);
   });
 
   it("空のカートを処理する", () => {
