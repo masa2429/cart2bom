@@ -60,9 +60,10 @@ describe("GitHub Pages viewer", () => {
       .find((candidate) => candidate.textContent === "コピーして一括入力へ進む");
     expect(akizukiProceed?.href).toContain("blanketorder.aspx#cart2bom=");
     expect(akizukiProceed?.href).toContain("&action=quick-order&store=akizuki");
-    const monotaroProceed = Array.from(document.querySelectorAll<HTMLButtonElement>("button"))
-      .find((candidate) => candidate.textContent === "バスケットへ追加");
-    expect(monotaroProceed).toBeInstanceOf(HTMLButtonElement);
+    const monotaroProceed = Array.from(document.querySelectorAll<HTMLAnchorElement>("a"))
+      .find((candidate) => candidate.textContent === "公式入力画面を開く");
+    expect(monotaroProceed?.href).toBe("https://www.monotaro.com/quick-order/");
+    expect(document.body.textContent).toContain("入力補助（1商品）");
     expect(document.body.textContent).not.toContain("一括入力データをコピー");
     expect(document.body.textContent).not.toContain("公式の一括入力画面を開く");
     const importLink = Array.from(document.querySelectorAll<HTMLAnchorElement>("a"))
@@ -118,7 +119,7 @@ describe("GitHub Pages viewer", () => {
     expect(document.body.textContent).not.toContain("公式の一括入力画面を開く");
   });
 
-  it("モノタロウはインストールなしで10商品ごとの公式フォームを送信する", () => {
+  it("モノタロウは10商品ごとにq0-p9へ貼り付ける値を個別コピーできる", async () => {
     const items = Array.from({ length: 11 }, (_, index) => ({
       ...list.items[1]!,
       id: `monotaro:${10_000_000 + index}`,
@@ -127,28 +128,22 @@ describe("GitHub Pages viewer", () => {
       quantity: index + 1,
     }));
     const monotaroList: SavedList = { ...list, items };
-    const submit = vi.spyOn(HTMLFormElement.prototype, "submit").mockImplementation(() => undefined);
     renderSharedListPage(document, root, monotaroList, "https://masa2429.github.io/cart2bom/share/#cart2bom=j.test");
 
-    const first = Array.from(document.querySelectorAll<HTMLButtonElement>("button"))
-      .find((candidate) => candidate.textContent === "1回目（10商品）を追加");
-    const second = Array.from(document.querySelectorAll<HTMLButtonElement>("button"))
-      .find((candidate) => candidate.textContent === "2回目（1商品）を追加");
-    expect(first).toBeInstanceOf(HTMLButtonElement);
-    expect(second).toBeInstanceOf(HTMLButtonElement);
-    second?.click();
-
-    expect(submit).toHaveBeenCalledTimes(1);
-    const form = document.querySelector<HTMLFormElement>('form[action="https://www.monotaro.com/monotaroMain.py"]');
-    expect(form?.method).toBe("post");
-    expect(form?.target).toBe("_blank");
-    expect(new FormData(form ?? undefined).get("func"))
-      .toBe("monotaro.quickOrder.insertMultiServlet.InsertMultiServlet");
-    expect(new FormData(form ?? undefined).get("q0")).toBe("10000010");
-    expect(new FormData(form ?? undefined).get("p0")).toBe("11");
-    expect(second?.disabled).toBe(true);
-    expect(second?.textContent).toBe("2回目を送信済み");
-    submit.mockRestore();
+    const guides = document.querySelectorAll<HTMLDetailsElement>(".viewer-copy-guide");
+    expect(guides).toHaveLength(2);
+    expect(guides[0]?.open).toBe(true);
+    expect(guides[0]?.textContent).toContain("1回目の入力補助（10商品）");
+    expect(guides[1]?.textContent).toContain("2回目の入力補助（1商品）");
+    const code = document.querySelector<HTMLButtonElement>('button[aria-label="q0用の10000000をコピー"]');
+    const quantity = document.querySelector<HTMLButtonElement>('button[aria-label="p0用の1をコピー"]');
+    code?.click();
+    quantity?.click();
+    await vi.waitFor(() => expect(writeText).toHaveBeenCalledTimes(2));
+    expect(writeText.mock.calls[0]?.[0]).toBe("10000000");
+    expect(writeText.mock.calls[1]?.[0]).toBe("1");
+    await vi.waitFor(() => expect(code?.classList.contains("viewer-copy-done")).toBe(true));
+    expect(document.querySelector('form[action="https://www.monotaro.com/monotaroMain.py"]')).toBeNull();
   });
 
   it("通常ページと不正URL用の画面を安全に表示する", () => {
