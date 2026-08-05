@@ -19,6 +19,7 @@ export interface StoreAdapter {
   matches(url: URL): boolean;
   isCartPage(url: URL, document: Document): boolean;
   getCartUrl(): string | null;
+  prepareCart?(document: Document): Promise<void>;
   extractCart(document: Document): CartExtractionResult;
   readonly quickOrderName?: string;
   readonly quickOrderCodeRequirement?: string;
@@ -28,5 +29,5 @@ export interface StoreAdapter {
   getQuickOrderUrl?(): string | null;
   isQuickOrderPage?(url: URL, document: Document): boolean;
   fillQuickOrder?(document: Document, text: string): number | Promise<number>;
-  submitQuickOrder?(document: Document, text: string): number;
+  submitQuickOrder?(document: Document, text: string): number | Promise<number>;
 }

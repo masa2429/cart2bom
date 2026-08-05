@@ -47,6 +47,9 @@ describe("Cart2BOM app flow", () => {
     launcher?.click();
     buttonByText("現在のカートを読み取る").click();
 
+    await vi.waitFor(() => {
+      expect(document.querySelector<HTMLInputElement>('input[aria-label="リスト名"]')).not.toBeNull();
+    });
     const listName = document.querySelector<HTMLInputElement>('input[aria-label="リスト名"]');
     const quantity = document.querySelector<HTMLInputElement>('input[aria-label="105148の数量"]');
     expect(listName).not.toBeNull();

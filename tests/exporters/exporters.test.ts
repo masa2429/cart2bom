@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { AkizukiAdapter } from "../../src/adapters/akizuki";
 import { MonotaroAdapter } from "../../src/adapters/monotaro";
+import { MisumiAdapter } from "../../src/adapters/misumi";
 import { CURRENT_SCHEMA_VERSION, type CartItem, type SavedList } from "../../src/core/models";
 import { parseSavedListJson } from "../../src/core/validation";
 import { exportCsv } from "../../src/exporters/csv";
@@ -88,5 +89,19 @@ describe("exporters", () => {
     expect(batches).toHaveLength(2);
     expect(batches[0]?.split("\n")).toHaveLength(10);
     expect(batches[1]).toBe("10000010\t2");
+  });
+
+  it("ミスミ見積・注文へ型番、数量、メーカー名を出力する", () => {
+    const misumiItem = {
+      ...item,
+      id: "misumi:CB3-10",
+      storeId: "misumi",
+      storeName: "ミスミ",
+      orderCode: "CB3-10",
+      manufacturerName: "ミスミ",
+      quantity: 4,
+    };
+    expect(exportQuickOrder({ ...list, items: [misumiItem] }, new MisumiAdapter()))
+      .toBe("CB3-10\t4\tミスミ");
   });
 });

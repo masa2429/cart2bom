@@ -22,6 +22,7 @@ const userScriptHeader = `// ==UserScript==
 // @match        https://www.akizukidenshi.com/*
 // @match        https://monotaro.com/*
 // @match        https://www.monotaro.com/*
+// @match        https://jp.misumi-ec.com/*
 // @run-at       document-idle
 // @grant        GM.getValue
 // @grant        GM.setValue

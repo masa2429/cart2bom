@@ -1,0 +1,95 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+import { beforeEach, describe, expect, it } from "vitest";
+import { MisumiAdapter, parseMisumiYen } from "../../src/adapters/misumi";
+import type { CartItem } from "../../src/core/models";
+
+const fixture = readFileSync(resolve("tests/fixtures/misumi-cart.html"), "utf8");
+
+describe("MisumiAdapter", () => {
+  beforeEach(() => {
+    document.documentElement.innerHTML = fixture;
+  });
+
+  it("ミスミドメインとカート・見積注文ページを識別する", () => {
+    const adapter = new MisumiAdapter();
+    expect(adapter.matches(new URL("https://jp.misumi-ec.com/"))).toBe(true);
+    expect(adapter.isCartPage(new URL("https://jp.misumi-ec.com/order/cart"), document)).toBe(true);
+    expect(adapter.isQuickOrderPage(new URL("https://jp.misumi-ec.com/order/part-number/create"), document)).toBe(true);
+    expect(adapter.isCartPage(new URL("https://jp.misumi-ec.com/vona2/detail/1"), document)).toBe(false);
+  });
+
+  it("金額表記を整数へ変換する", () => {
+    expect(parseMisumiYen("10,512円")).toBe(10512);
+    expect(parseMisumiYen("-")).toBeNull();
+  });
+
+  it("型番、メーカー、数量、価格、出荷日、画像を抽出する", () => {
+    const result = new MisumiAdapter(() => new Date("2026-08-05T00:00:00.000Z"))
+      .extractCart(document);
+
+    expect(result.detectedCount).toBe(2);
+    expect(result.warnings).toEqual([]);
+    expect(result.items).toHaveLength(2);
+    expect(result.items[0]).toMatchObject({
+      orderCode: "MPCL840",
+      manufacturerName: "ミスミ",
+      manufacturerPartNumber: "MPCL840",
+      name: "パーツクリーナー MPCL840",
+      salesUnit: "パック30個入",
+      quantity: 1,
+      unitPrice: 10512,
+      subtotal: 10512,
+      leadTime: "2026/08/06",
+      imageUrl: "https://content.misumi-ec.com/image/upload/test/mpcl840.jpg",
+      note: "16:00以後は出荷日が1日追加になります。",
+    });
+    expect(result.items[1]).toMatchObject({
+      orderCode: "CB3-10",
+      quantity: 4,
+      unitPrice: 300,
+      subtotal: 1200,
+    });
+  });
+
+  it("価格未表示の商品を選択して照会する", async () => {
+    document.querySelector('[class*="CartDetailTile_unitPriceCell"]')?.replaceChildren(document.createTextNode("-"));
+    const button = document.querySelector<HTMLButtonElement>('[data-testid="all-check-box"]');
+    button?.addEventListener("click", () => {
+      const price = document.querySelector('[class*="CartDetailTile_unitPriceCell"]');
+      const value = document.createElement("p");
+      value.textContent = "10,512";
+      price?.replaceChildren(value);
+    });
+
+    await new MisumiAdapter().prepareCart(document);
+
+    expect(button).not.toBeNull();
+    expect(parseMisumiYen(document.querySelector('[class*="CartDetailTile_unitPriceCell"] p')?.textContent)).toBe(10512);
+  });
+
+  it("見積・注文形式へ型番と数量を出力する", () => {
+    const adapter = new MisumiAdapter();
+    expect(adapter.validateQuickOrderCode("CB3-10")).toBe(true);
+    expect(adapter.validateQuickOrderCode("bad\tcode")).toBe(false);
+    expect(adapter.createQuickOrderText([
+      { orderCode: "CB3-10", quantity: 4, manufacturerName: "ミスミ" },
+      { orderCode: "MPCL840", quantity: 1, manufacturerName: "ミスミ" },
+    ] as CartItem[])).toBe("CB3-10\t4\tミスミ\nMPCL840\t1\tミスミ");
+  });
+
+  it("一括入力欄がなければ送信しない", async () => {
+    document.body.replaceChildren();
+    await expect(new MisumiAdapter().submitQuickOrder(document, "CB3-10\t4"))
+      .rejects.toThrow("一括入力欄を確認できませんでした");
+  });
+
+  it("空のカートを処理する", () => {
+    document.body.replaceChildren();
+    expect(new MisumiAdapter().extractCart(document)).toEqual({
+      items: [],
+      warnings: [],
+      detectedCount: 0,
+    });
+  });
+});

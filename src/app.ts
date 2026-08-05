@@ -171,10 +171,20 @@ export function startCart2BOM(): void {
   const openMenu = (): void => {
     openMainMenu(document, {
       storeName: adapter.name,
-      onReadCart: () => {
+      onReadCart: async () => {
         const currentUrl = new URL(window.location.href);
         if (!adapter.isCartPage(currentUrl, document)) {
           showMessage(document, "カートページではありません", "買い物カゴのページを開いてから実行してください。");
+          return;
+        }
+        try {
+          await adapter.prepareCart?.(document);
+        } catch (error) {
+          showMessage(
+            document,
+            "商品情報を準備できませんでした",
+            error instanceof Error ? error.message : "価格と出荷日の取得に失敗しました。",
+          );
           return;
         }
         const result = adapter.extractCart(document);
@@ -276,7 +286,7 @@ export function startCart2BOM(): void {
           phase: "submitted",
           submittedLineCount: batch.length,
         });
-        adapter.submitQuickOrder?.(document, batch.join("\n"));
+        await adapter.submitQuickOrder?.(document, batch.join("\n"));
       } catch (error) {
         const { submittedLineCount: _submittedLineCount, ...retry } = pending;
         await savePendingQuickOrder(storage, { ...retry, phase: "ready" });
