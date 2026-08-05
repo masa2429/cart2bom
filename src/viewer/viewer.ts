@@ -45,6 +45,12 @@ function yen(value: number | null): string {
   return value === null ? "—" : `${value.toLocaleString("ja-JP")}円`;
 }
 
+function createAkizukiPrefilledUrl(quickOrderUrl: string, batches: string[]): string {
+  const url = new URL(quickOrderUrl);
+  url.searchParams.set("regist_goods", batches.join("\n").replace(/\t/g, " "));
+  return url.href;
+}
+
 function createMonotaroCopyGuide(
   targetDocument: Document,
   batch: string,
@@ -218,26 +224,44 @@ function createStoreActions(
         });
       }
       const supportsSharedAutoFill = Boolean(quickOrderUrl && (adapter.fillQuickOrder || adapter.submitQuickOrder));
-      if (adapter.id !== "monotaro" && supportsSharedAutoFill && quickOrderUrl) {
+      if (adapter.id === "akizuki" && supportsSharedAutoFill && quickOrderUrl) {
         hasCombinedAction = true;
         const proceed = element(
           targetDocument,
           "a",
           "viewer-button viewer-button-primary",
-          "コピーして一括入力へ進む",
+          "入力済みの一括注文画面を開く",
+        );
+        proceed.href = createSharedQuickOrderUrl(
+          shareUrl,
+          createAkizukiPrefilledUrl(quickOrderUrl, batches),
+          adapter.id,
+        );
+        proceed.target = "_blank";
+        proceed.rel = "noopener noreferrer";
+        guidance.textContent =
+          "ブランケットオーダーを入力済みの状態で開きます。Cart2BOM導入済みならバスケットへの追加まで自動で進めます。";
+        actions.append(proceed);
+      } else if (adapter.id === "misumi" && supportsSharedAutoFill && quickOrderUrl) {
+        hasCombinedAction = true;
+        const proceed = element(
+          targetDocument,
+          "a",
+          "viewer-button viewer-button-primary",
+          "入力データをコピーしてミスミを開く",
         );
         proceed.href = createSharedQuickOrderUrl(shareUrl, quickOrderUrl, adapter.id);
         proceed.target = "_blank";
         proceed.rel = "noopener noreferrer";
         proceed.addEventListener("click", () => {
           void copyText(targetDocument, batches.join("\n")).then(() => {
-            status.textContent = `${adapter.name}の入力データをコピーしました。`;
+            status.textContent = "ミスミの入力データをコピーしました。「エクセルから一括コピー」欄へ貼り付けてください。";
           }).catch((caught: unknown) => {
             status.textContent = caught instanceof Error ? caught.message : "コピーできませんでした。";
           });
         });
         guidance.textContent =
-          "入力データをコピーして公式画面へ進みます。Cart2BOM導入済みならバスケットへの追加まで自動で進めます。";
+          "型番・数量・メーカー名をコピーして公式画面を開きます。「エクセルから一括コピー」欄へ一度貼り付けてください。Cart2BOM導入済みならバスケットへの追加まで自動で進めます。";
         actions.append(proceed);
       } else if (adapter.id !== "monotaro") {
         batches.forEach((batch, index) => {

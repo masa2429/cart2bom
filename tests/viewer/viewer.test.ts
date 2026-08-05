@@ -57,8 +57,9 @@ describe("GitHub Pages viewer", () => {
     expect(document.body.textContent).toContain("秋月電子通商（1商品）");
     expect(document.body.textContent).toContain("モノタロウ（1商品）");
     const akizukiProceed = Array.from(document.querySelectorAll<HTMLAnchorElement>("a"))
-      .find((candidate) => candidate.textContent === "コピーして一括入力へ進む");
-    expect(akizukiProceed?.href).toContain("blanketorder.aspx#cart2bom=");
+      .find((candidate) => candidate.textContent === "入力済みの一括注文画面を開く");
+    expect(akizukiProceed?.href).toContain("blanketorder.aspx?regist_goods=105148+2#cart2bom=");
+    expect(new URL(akizukiProceed?.href ?? "https://example.com").searchParams.get("regist_goods")).toBe("105148 2");
     expect(akizukiProceed?.href).toContain("&action=quick-order&store=akizuki");
     const monotaroProceed = Array.from(document.querySelectorAll<HTMLAnchorElement>("a"))
       .find((candidate) => candidate.textContent === "公式入力画面を開く");
@@ -82,21 +83,16 @@ describe("GitHub Pages viewer", () => {
     expect(document.body.textContent).toContain("モノタロウ（1商品）");
   });
 
-  it("平文と店舗用データをクリップボードへコピーする", async () => {
+  it("平文をクリップボードへコピーする", async () => {
     renderSharedListPage(document, root, list, "https://masa2429.github.io/cart2bom/share/#cart2bom=j.test");
     const plain = Array.from(document.querySelectorAll<HTMLButtonElement>("button"))
       .find((candidate) => candidate.textContent === "平文をコピー");
-    const quickOrder = Array.from(document.querySelectorAll<HTMLAnchorElement>("a"))
-      .find((candidate) => candidate.textContent === "コピーして一括入力へ進む");
-    quickOrder?.addEventListener("click", (event) => event.preventDefault(), { capture: true });
     plain?.click();
-    quickOrder?.click();
-    await vi.waitFor(() => expect(writeText).toHaveBeenCalledTimes(2));
+    await vi.waitFor(() => expect(writeText).toHaveBeenCalledTimes(1));
     expect(writeText.mock.calls[0]?.[0]).toContain("装置A 電装部品");
-    expect(writeText.mock.calls[1]?.[0]).toMatch(/105148\t2|47817527\t3/);
   });
 
-  it("ミスミもコピーと公式画面への移動を1つのボタンにまとめる", () => {
+  it("ミスミは入力データのコピーと公式画面への移動を1つのボタンにまとめる", async () => {
     const misumiList: SavedList = {
       ...list,
       items: [{
@@ -113,9 +109,14 @@ describe("GitHub Pages viewer", () => {
     };
     renderSharedListPage(document, root, misumiList, "https://masa2429.github.io/cart2bom/share/#cart2bom=j.test");
     const proceed = Array.from(document.querySelectorAll<HTMLAnchorElement>("a"))
-      .find((candidate) => candidate.textContent === "コピーして一括入力へ進む");
+      .find((candidate) => candidate.textContent === "入力データをコピーしてミスミを開く");
     expect(proceed?.href).toContain("jp.misumi-ec.com/order/part-number/create#cart2bom=j.test");
     expect(proceed?.href).toContain("&action=quick-order&store=misumi");
+    proceed?.addEventListener("click", (event) => event.preventDefault(), { capture: true });
+    proceed?.click();
+    await vi.waitFor(() => expect(writeText).toHaveBeenCalledWith("HNTTBS5-5\t2\tミスミ"));
+    await vi.waitFor(() => expect(document.querySelector(".viewer-status")?.textContent)
+      .toContain("エクセルから一括コピー"));
     expect(document.body.textContent).not.toContain("公式の一括入力画面を開く");
   });
 
