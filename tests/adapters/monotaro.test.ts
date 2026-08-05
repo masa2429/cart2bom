@@ -91,7 +91,11 @@ describe("MonotaroAdapter", () => {
     const form = document.querySelector("form");
     const submit = document.querySelector("button");
     const submitted = { value: false };
+    const changedNames: string[] = [];
     form?.addEventListener("submit", (event) => { event.preventDefault(); submitted.value = true; });
+    form?.addEventListener("change", (event) => {
+      if (event.target instanceof HTMLInputElement) changedNames.push(event.target.name);
+    });
 
     const count = await new MonotaroAdapter().fillQuickOrder(document, "47817527\t2\n42107457\t10");
 
@@ -100,6 +104,7 @@ describe("MonotaroAdapter", () => {
     expect(document.querySelector<HTMLInputElement>('input[name="p0"]')?.value).toBe("2");
     expect(document.querySelector<HTMLInputElement>('input[name="q1"]')?.value).toBe("42107457");
     expect(document.querySelector<HTMLInputElement>('input[name="p1"]')?.value).toBe("10");
+    expect(changedNames).toEqual(["q0", "q1", "p0", "p1"]);
     expect(submitted.value).toBe(false);
     expect(submit).not.toBeNull();
   });

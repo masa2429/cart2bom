@@ -107,7 +107,7 @@ export class MonotaroAdapter implements StoreAdapter {
     return this.matches(url) && /^\/quick-order\/?$/i.test(url.pathname);
   }
 
-  /** Fills the ten visible rows sequentially and waits for each product lookup. */
+  /** Staggers code input, waits for lookups in parallel, then fills quantities. */
   public async fillQuickOrder(targetDocument: Document, text: string): Promise<number> {
     const rows = text.split(/\r?\n/).filter((line) => line.trim()).map((line) => line.split("\t"));
     if (rows.length > this.quickOrderCapacity) {
@@ -154,17 +154,28 @@ export class MonotaroAdapter implements StoreAdapter {
     };
 
     for (let index = 0; index < rows.length; index += 1) {
-      const [code = "", quantity = ""] = rows[index] ?? [];
+      const [code = ""] = rows[index] ?? [];
       const codeInput = codeInputs[index];
-      const quantityInput = quantityInputs[index];
-      if (!codeInput || !quantityInput) continue;
+      if (!codeInput) continue;
       codeInput.focus();
       setValue(codeInput, code);
       codeInput.blur();
+      await wait(100);
+    }
+
+    await Promise.all(rows.map(async ([code = ""], index) => {
+      const codeInput = codeInputs[index];
+      if (!codeInput) return;
       await waitForProduct(codeInput);
       if (codeInput.value !== code) {
         throw new Error(`${code}の注文コードが画面から消去されました。ページを再読み込みして再試行してください。`);
       }
+    }));
+
+    for (let index = 0; index < rows.length; index += 1) {
+      const [code = "", quantity = ""] = rows[index] ?? [];
+      const quantityInput = quantityInputs[index];
+      if (!quantityInput) continue;
       quantityInput.focus();
       setValue(quantityInput, quantity);
       quantityInput.blur();
