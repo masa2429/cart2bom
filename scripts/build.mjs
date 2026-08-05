@@ -14,6 +14,7 @@ const userScriptHeader = `// ==UserScript==
 // @name         Cart2BOM
 // @namespace    cart2bom
 // @version      ${packageJson.version}
+// @author       morita_masato
 // @description  通販サイトのカートを保存・共有・再利用します
 // @homepageURL  https://github.com/masa2429/cart2bom
 // @supportURL   https://github.com/masa2429/cart2bom/issues
