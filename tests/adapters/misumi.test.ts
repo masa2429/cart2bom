@@ -88,8 +88,20 @@ describe("MisumiAdapter", () => {
 
   it("一括入力欄がなければ送信しない", async () => {
     document.body.replaceChildren();
-    await expect(new MisumiAdapter().submitQuickOrder(document, "CB3-10\t4"))
+    await expect(new MisumiAdapter(undefined, 0).submitQuickOrder(document, "CB3-10\t4"))
       .rejects.toThrow("一括入力欄を確認できませんでした");
+  });
+
+  it("画面描画後に追加される一括入力欄を待つ", async () => {
+    document.body.replaceChildren();
+    window.setTimeout(() => {
+      const textarea = document.createElement("textarea");
+      textarea.dataset.testid = "excel-copy-input";
+      document.body.append(textarea);
+    }, 10);
+
+    await expect(new MisumiAdapter(undefined, 30).submitQuickOrder(document, "CB3-10\t4"))
+      .rejects.toThrow("画面操作が時間内に完了しませんでした");
   });
 
   it("空のカートを処理する", () => {

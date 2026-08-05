@@ -69,7 +69,10 @@ export class MisumiAdapter implements StoreAdapter {
   public readonly quickOrderName = "ミスミ見積・注文";
   public readonly quickOrderCodeRequirement = "型番は256文字以内で、タブと改行を含めない必要があります。";
 
-  public constructor(private readonly now: () => Date = () => new Date()) {}
+  public constructor(
+    private readonly now: () => Date = () => new Date(),
+    private readonly uiReadyTimeoutMs = 10_000,
+  ) {}
 
   public matches(url: URL): boolean {
     return url.hostname.toLowerCase() === "jp.misumi-ec.com";
@@ -125,10 +128,12 @@ export class MisumiAdapter implements StoreAdapter {
         const [code = "", ...columns] = line.split("\t");
         return [normalizeMisumiPartNumber(code), ...columns].join("\t");
       });
-    const textarea = targetDocument.querySelector<HTMLTextAreaElement>(
+    const textarea = await this.waitForElement<HTMLTextAreaElement>(
+      targetDocument,
       'textarea[data-testid="excel-copy-input"]',
+      this.uiReadyTimeoutMs,
+      "ミスミの一括入力欄を確認できませんでした。",
     );
-    if (!textarea) throw new Error("ミスミの一括入力欄を確認できませんでした。");
 
     const valueSetter = targetDocument.defaultView
       ? Object.getOwnPropertyDescriptor(targetDocument.defaultView.HTMLTextAreaElement.prototype, "value")?.set
@@ -229,14 +234,19 @@ export class MisumiAdapter implements StoreAdapter {
   private async waitForElement<T extends Element>(
     targetDocument: Document,
     selector: string,
-    timeoutMs = 8_000,
+    timeoutMs = this.uiReadyTimeoutMs,
+    errorMessage = "ミスミの画面操作が時間内に完了しませんでした。",
   ): Promise<T> {
     let found: T | null = null;
-    await this.waitFor(targetDocument, () => {
-      found = targetDocument.querySelector<T>(selector);
-      return found !== null;
-    }, timeoutMs);
-    if (!found) throw new Error("ミスミの画面操作が時間内に完了しませんでした。");
+    try {
+      await this.waitFor(targetDocument, () => {
+        found = targetDocument.querySelector<T>(selector);
+        return found !== null;
+      }, timeoutMs);
+    } catch {
+      throw new Error(errorMessage);
+    }
+    if (!found) throw new Error(errorMessage);
     return found;
   }
 
