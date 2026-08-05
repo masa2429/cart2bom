@@ -6,7 +6,11 @@ function comparableHost(value: string): string {
 
 function isAllowedHost(item: CartItem, imageHost: string, productHost: string): boolean {
   if (comparableHost(imageHost) === comparableHost(productHost)) return true;
-  return item.storeId === "monotaro" && imageHost.toLowerCase() === "jp.images-monotaro.com";
+  const knownImageHosts: Partial<Record<string, string>> = {
+    monotaro: "jp.images-monotaro.com",
+    misumi: "content.misumi-ec.com",
+  };
+  return imageHost.toLowerCase() === knownImageHosts[item.storeId];
 }
 
 /** Creates an image only when it is HTTPS and hosted by the store or its known image host. */

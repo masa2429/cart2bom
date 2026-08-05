@@ -28,4 +28,14 @@ describe("createProductImage", () => {
     });
     expect(image?.src).toContain("jp.images-monotaro.com");
   });
+
+  it("ミスミの公式画像ホストを許可する", () => {
+    const image = createProductImage(document, {
+      ...item,
+      storeId: "misumi",
+      productUrl: "https://jp.misumi-ec.com/vona2/detail/221004937839/",
+      imageUrl: "https://content.misumi-ec.com/image/upload/test/product.jpg",
+    });
+    expect(image?.src).toContain("content.misumi-ec.com");
+  });
 });
