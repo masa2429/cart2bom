@@ -191,15 +191,14 @@ function createStoreActions(
 export function renderLandingPage(targetDocument: Document, root: HTMLElement): void {
   root.replaceChildren();
   const main = element(targetDocument, "main", "viewer-landing");
-  const hero = element(targetDocument, "section", "viewer-hero");
-  hero.append(
-    element(targetDocument, "p", "viewer-eyebrow", "通販カートを、再利用できる部品リストへ"),
-    element(targetDocument, "h1", undefined, "Cart2BOM"),
+  const panel = element(targetDocument, "section", "viewer-empty-state viewer-landing-card");
+  panel.append(
+    element(targetDocument, "h1", undefined, "共有リストが指定されていません"),
     element(
       targetDocument,
       "p",
-      "viewer-hero-copy",
-      "秋月電子通商、モノタロウ、ミスミのカートを保存・共有・再利用するUserScriptです。共有リンクは、Cart2BOMを入れていない人でも閲覧できます。",
+      "viewer-muted",
+      "Cart2BOMで作成した共有URLを開くと、ここに部品リストが表示されます。",
     ),
   );
   const actions = element(targetDocument, "div", "viewer-button-row viewer-button-row-center");
@@ -210,8 +209,8 @@ export function renderLandingPage(targetDocument: Document, root: HTMLElement): 
   github.target = "_blank";
   github.rel = "noopener noreferrer";
   actions.append(install, github);
-  hero.append(actions);
-  main.append(hero);
+  panel.append(actions);
+  main.append(panel);
   root.append(createHeader(targetDocument), main);
 }
 
@@ -246,16 +245,14 @@ export function renderSharedListPage(
   const total = element(targetDocument, "p", "viewer-total");
   const status = element(targetDocument, "p", "viewer-status");
   status.setAttribute("role", "status");
-  const toolbar = element(targetDocument, "div", "viewer-toolbar");
   const copyShare = button(targetDocument, "共有URLをコピー");
   copyShare.addEventListener("click", () => {
     void copyText(targetDocument, shareUrl).then(() => { status.textContent = "共有URLをコピーしました。"; })
       .catch((caught: unknown) => { status.textContent = caught instanceof Error ? caught.message : "コピーできませんでした。"; });
   });
-  toolbar.append(copyShare);
   summaryPanel.append(eyebrow, title, description);
   if (tags.childElementCount > 0) summaryPanel.append(tags);
-  summaryPanel.append(total, toolbar, status);
+  summaryPanel.append(total);
 
   const controls = element(targetDocument, "section", "viewer-controls");
   const filters = element(targetDocument, "div", "viewer-filters");
@@ -288,7 +285,7 @@ export function renderSharedListPage(
   const listSection = element(targetDocument, "section", "viewer-list-section");
   const itemsContainer = element(targetDocument, "div", "viewer-items");
   const outputSection = element(targetDocument, "section", "viewer-output-section");
-  const storeActionsSlot = element(targetDocument, "div");
+  const storeActionsSlot = element(targetDocument, "div", "viewer-store-actions-slot");
 
   const selectedList = (): SavedList => ({
     ...list,
@@ -316,6 +313,7 @@ export function renderSharedListPage(
 
   const outputTitle = element(targetDocument, "h2", "viewer-section-title", "共有・ファイル出力");
   const outputButtons = element(targetDocument, "div", "viewer-button-row");
+  outputButtons.append(copyShare);
   const plain = button(targetDocument, "平文をコピー", "primary");
   plain.addEventListener("click", () => {
     void copyText(targetDocument, exportPlainText(selectedList())).then(() => { status.textContent = "平文をコピーしました。"; })
@@ -340,7 +338,7 @@ export function renderSharedListPage(
     });
     outputButtons.append(save);
   }
-  outputSection.append(outputTitle, outputButtons);
+  outputSection.append(outputTitle, outputButtons, status);
 
   const firstAdapter = getAdapters().find((adapter) => list.items.some((item) => item.storeId === adapter.id));
   const cartUrl = firstAdapter?.getCartUrl();
@@ -360,7 +358,13 @@ export function renderSharedListPage(
     outputSection.append(importPanel);
   }
 
-  main.append(summaryPanel, controls, listSection, outputSection, storeActionsSlot);
+  const contentLayout = element(targetDocument, "div", "viewer-content-layout");
+  const primary = element(targetDocument, "div", "viewer-primary");
+  const sidebar = element(targetDocument, "aside", "viewer-sidebar");
+  primary.append(summaryPanel, controls, listSection);
+  sidebar.append(outputSection, storeActionsSlot);
+  contentLayout.append(primary, sidebar);
+  main.append(contentLayout);
   root.append(createHeader(targetDocument), main);
   setFilter("all");
   refresh();

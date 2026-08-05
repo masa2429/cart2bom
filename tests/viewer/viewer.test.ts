@@ -48,6 +48,9 @@ describe("GitHub Pages viewer", () => {
     expect(document.querySelector(".viewer-list-title")?.textContent).toBe("装置A 電装部品");
     expect(document.querySelector(".viewer-total")?.textContent).toContain("2/2商品を選択・合計 800円");
     expect(document.querySelectorAll(".viewer-item-card")).toHaveLength(2);
+    expect(document.querySelector(".viewer-content-layout")?.children).toHaveLength(2);
+    expect(document.querySelector(".viewer-sidebar")?.textContent).toContain("共有・ファイル出力");
+    expect(document.querySelector(".viewer-sidebar")?.textContent).toContain("店舗で注文する");
     expect(document.querySelector<HTMLImageElement>(".viewer-item-media img")?.referrerPolicy).toBe("no-referrer");
     expect(document.body.textContent).toContain("秋月電子通商（1商品）");
     expect(document.body.textContent).toContain("モノタロウ（1商品）");
@@ -82,6 +85,7 @@ describe("GitHub Pages viewer", () => {
 
   it("通常ページと不正URL用の画面を安全に表示する", () => {
     renderLandingPage(document, root);
+    expect(document.body.textContent).toContain("共有リストが指定されていません");
     expect(document.body.textContent).toContain("Cart2BOMをインストール");
     renderErrorPage(document, root, "<script>危険</script>");
     expect(document.querySelector("script")).toBeNull();
