@@ -45,6 +45,38 @@ function yen(value: number | null): string {
   return value === null ? "—" : `${value.toLocaleString("ja-JP")}円`;
 }
 
+function submitMonotaroBatch(targetDocument: Document, batch: string): number {
+  const rows = batch.split(/\r?\n/).filter((line) => line.trim()).map((line) => line.split("\t"));
+  const form = targetDocument.createElement("form");
+  form.method = "POST";
+  form.action = "https://www.monotaro.com/monotaroMain.py";
+  form.target = "_blank";
+  form.setAttribute("rel", "noopener");
+  form.hidden = true;
+  const appendField = (name: string, value: string): void => {
+    const input = targetDocument.createElement("input");
+    input.type = "hidden";
+    input.name = name;
+    input.value = value;
+    form.append(input);
+  };
+  appendField("func", "monotaro.quickOrder.insertMultiServlet.InsertMultiServlet");
+  for (let index = 0; index < 10; index += 1) {
+    const [code = "", quantity = ""] = rows[index] ?? [];
+    appendField(`q${index}`, code);
+    appendField(`p${index}`, quantity);
+  }
+  targetDocument.body.append(form);
+  const nativeSubmit = targetDocument.defaultView?.HTMLFormElement.prototype.submit;
+  if (!nativeSubmit) {
+    form.remove();
+    throw new Error("モノタロウの公式フォームを送信できませんでした。");
+  }
+  nativeSubmit.call(form);
+  targetDocument.defaultView?.setTimeout(() => form.remove(), 1000);
+  return rows.length;
+}
+
 function createHeader(targetDocument: Document): HTMLElement {
   const header = element(targetDocument, "header", "viewer-header");
   const brand = element(targetDocument, "a", "viewer-brand", "Cart2BOM");
@@ -154,35 +186,54 @@ function createStoreActions(
     try {
       const batches = exportQuickOrderBatches(selectedList, adapter);
       const quickOrderUrl = adapter.getQuickOrderUrl?.();
-      const supportsSharedAutoFill = Boolean(quickOrderUrl && (adapter.fillQuickOrder || adapter.submitQuickOrder));
-      if (supportsSharedAutoFill && quickOrderUrl) {
+      if (adapter.id === "monotaro") {
         hasCombinedAction = true;
-        const isMonotaro = adapter.id === "monotaro";
+        guidance.textContent = batches.length === 1
+          ? "インストール不要で、公式フォームからバスケットへ追加します。"
+          : "インストール不要です。10商品ずつ、上から順に公式フォームでバスケットへ追加してください。";
+        batches.forEach((batch, index) => {
+          const count = batch.split(/\r?\n/).filter((line) => line.trim()).length;
+          const add = button(
+            targetDocument,
+            batches.length === 1 ? "バスケットへ追加" : `${index + 1}回目（${count}商品）を追加`,
+            "primary",
+          );
+          add.addEventListener("click", () => {
+            try {
+              const submittedCount = submitMonotaroBatch(targetDocument, batch);
+              add.disabled = true;
+              add.textContent = batches.length === 1 ? "送信済み" : `${index + 1}回目を送信済み`;
+              status.textContent = `モノタロウへ${submittedCount}商品を送信しました。開いたバスケットを確認してください。`;
+            } catch (caught) {
+              status.textContent = caught instanceof Error ? caught.message : "公式フォームを送信できませんでした。";
+            }
+          });
+          actions.append(add);
+        });
+      }
+      const supportsSharedAutoFill = Boolean(quickOrderUrl && (adapter.fillQuickOrder || adapter.submitQuickOrder));
+      if (adapter.id !== "monotaro" && supportsSharedAutoFill && quickOrderUrl) {
+        hasCombinedAction = true;
         const proceed = element(
           targetDocument,
           "a",
           "viewer-button viewer-button-primary",
-          isMonotaro ? "バスケットへ自動追加" : "コピーして一括入力へ進む",
+          "コピーして一括入力へ進む",
         );
         proceed.href = createSharedQuickOrderUrl(shareUrl, quickOrderUrl, adapter.id);
         proceed.target = "_blank";
         proceed.rel = "noopener noreferrer";
         proceed.addEventListener("click", () => {
-          if (isMonotaro) {
-            status.textContent = "モノタロウの自動追加画面を開きました。";
-            return;
-          }
           void copyText(targetDocument, batches.join("\n")).then(() => {
             status.textContent = `${adapter.name}の入力データをコピーしました。`;
           }).catch((caught: unknown) => {
             status.textContent = caught instanceof Error ? caught.message : "コピーできませんでした。";
           });
         });
-        guidance.textContent = isMonotaro
-          ? "Cart2BOMが10商品ずつクイックオーダーへ入力し、バスケットへの追加まで自動で進めます。"
-          : "入力データをコピーして公式画面へ進みます。Cart2BOM導入済みならバスケットへの追加まで自動で進めます。";
+        guidance.textContent =
+          "入力データをコピーして公式画面へ進みます。Cart2BOM導入済みならバスケットへの追加まで自動で進めます。";
         actions.append(proceed);
-      } else {
+      } else if (adapter.id !== "monotaro") {
         batches.forEach((batch, index) => {
           const copy = button(
             targetDocument,

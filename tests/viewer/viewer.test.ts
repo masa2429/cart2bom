@@ -60,10 +60,9 @@ describe("GitHub Pages viewer", () => {
       .find((candidate) => candidate.textContent === "コピーして一括入力へ進む");
     expect(akizukiProceed?.href).toContain("blanketorder.aspx#cart2bom=");
     expect(akizukiProceed?.href).toContain("&action=quick-order&store=akizuki");
-    const monotaroProceed = Array.from(document.querySelectorAll<HTMLAnchorElement>("a"))
-      .find((candidate) => candidate.textContent === "バスケットへ自動追加");
-    expect(monotaroProceed?.href).toContain("www.monotaro.com/quick-order/#cart2bom=");
-    expect(monotaroProceed?.href).toContain("&action=quick-order&store=monotaro");
+    const monotaroProceed = Array.from(document.querySelectorAll<HTMLButtonElement>("button"))
+      .find((candidate) => candidate.textContent === "バスケットへ追加");
+    expect(monotaroProceed).toBeInstanceOf(HTMLButtonElement);
     expect(document.body.textContent).not.toContain("一括入力データをコピー");
     expect(document.body.textContent).not.toContain("公式の一括入力画面を開く");
     const importLink = Array.from(document.querySelectorAll<HTMLAnchorElement>("a"))
@@ -117,6 +116,39 @@ describe("GitHub Pages viewer", () => {
     expect(proceed?.href).toContain("jp.misumi-ec.com/order/part-number/create#cart2bom=j.test");
     expect(proceed?.href).toContain("&action=quick-order&store=misumi");
     expect(document.body.textContent).not.toContain("公式の一括入力画面を開く");
+  });
+
+  it("モノタロウはインストールなしで10商品ごとの公式フォームを送信する", () => {
+    const items = Array.from({ length: 11 }, (_, index) => ({
+      ...list.items[1]!,
+      id: `monotaro:${10_000_000 + index}`,
+      orderCode: String(10_000_000 + index),
+      name: `モノタロウ商品${index + 1}`,
+      quantity: index + 1,
+    }));
+    const monotaroList: SavedList = { ...list, items };
+    const submit = vi.spyOn(HTMLFormElement.prototype, "submit").mockImplementation(() => undefined);
+    renderSharedListPage(document, root, monotaroList, "https://masa2429.github.io/cart2bom/share/#cart2bom=j.test");
+
+    const first = Array.from(document.querySelectorAll<HTMLButtonElement>("button"))
+      .find((candidate) => candidate.textContent === "1回目（10商品）を追加");
+    const second = Array.from(document.querySelectorAll<HTMLButtonElement>("button"))
+      .find((candidate) => candidate.textContent === "2回目（1商品）を追加");
+    expect(first).toBeInstanceOf(HTMLButtonElement);
+    expect(second).toBeInstanceOf(HTMLButtonElement);
+    second?.click();
+
+    expect(submit).toHaveBeenCalledTimes(1);
+    const form = document.querySelector<HTMLFormElement>('form[action="https://www.monotaro.com/monotaroMain.py"]');
+    expect(form?.method).toBe("post");
+    expect(form?.target).toBe("_blank");
+    expect(new FormData(form ?? undefined).get("func"))
+      .toBe("monotaro.quickOrder.insertMultiServlet.InsertMultiServlet");
+    expect(new FormData(form ?? undefined).get("q0")).toBe("10000010");
+    expect(new FormData(form ?? undefined).get("p0")).toBe("11");
+    expect(second?.disabled).toBe(true);
+    expect(second?.textContent).toBe("2回目を送信済み");
+    submit.mockRestore();
   });
 
   it("通常ページと不正URL用の画面を安全に表示する", () => {
