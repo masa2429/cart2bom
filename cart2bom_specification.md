@@ -92,7 +92,7 @@ UserScriptヘッダーの例：
 // ==UserScript==
 // @name         Cart2BOM
 // @namespace    cart2bom
-// @version      0.2.2
+// @version      0.2.3
 // @author       morita_masato
 // @description  通販サイトのカートを保存・共有・再利用します
 // @match        https://akizukidenshi.com/*
