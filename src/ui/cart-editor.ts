@@ -37,6 +37,13 @@ function input(targetDocument: Document, value: string, ariaLabel: string): HTML
   return element;
 }
 
+function textarea(targetDocument: Document, value: string, ariaLabel: string): HTMLTextAreaElement {
+  const element = targetDocument.createElement("textarea");
+  element.value = value;
+  element.setAttribute("aria-label", ariaLabel);
+  return element;
+}
+
 export function openCartEditor(targetDocument: Document, options: CartEditorOptions): void {
   const modal = openModal(targetDocument, options.existingList ? "保存リストを編集" : "カート読み取り結果");
   modal.overlay.classList.add("cart2bom-overlay-wide");
@@ -79,9 +86,21 @@ export function openCartEditor(targetDocument: Document, options: CartEditorOpti
   const table = targetDocument.createElement("table");
   const thead = targetDocument.createElement("thead");
   const headerRow = targetDocument.createElement("tr");
-  for (const heading of ["選択", "画像", "通販コード", "商品名", "メーカー名", "メーカー型番", "販売単位", "数量", "単価", "小計", "備考", "商品ページ", "削除"]) {
+  const selectAll = input(targetDocument, "", "すべての商品を選択");
+  selectAll.type = "checkbox";
+  selectAll.checked = true;
+  for (const [heading, className] of [
+    ["選択", "select"],
+    ["商品", "product"],
+    ["数量", "quantity"],
+    ["金額", "price"],
+    ["備考", "note"],
+    ["削除", "remove"],
+  ] as const) {
     const th = targetDocument.createElement("th");
     th.textContent = heading;
+    th.className = `cart2bom-col-${className}`;
+    if (className === "select") th.append(targetDocument.createElement("br"), selectAll);
     headerRow.append(th);
   }
   thead.append(headerRow);
@@ -89,17 +108,18 @@ export function openCartEditor(targetDocument: Document, options: CartEditorOpti
   const records: Array<{
     source: CartItem; selected: HTMLInputElement; name: HTMLInputElement; quantity: HTMLInputElement;
     manufacturer: HTMLInputElement; mpn: HTMLInputElement; salesUnit: HTMLInputElement;
-    note: HTMLInputElement; row: HTMLTableRowElement;
+    note: HTMLTextAreaElement; subtotal: HTMLElement; row: HTMLTableRowElement;
   }> = [];
   let refreshTotal = (): void => undefined;
+  let refreshSelectionState = (): void => undefined;
 
   for (const item of options.items) {
     const row = targetDocument.createElement("tr");
     const selected = input(targetDocument, "", `${item.orderCode}を選択`);
     selected.type = "checkbox";
     selected.checked = true;
-    const image: Node = createProductImage(targetDocument, item) ?? targetDocument.createTextNode("—");
     const itemName = input(targetDocument, item.name, `${item.orderCode}の商品名`);
+    itemName.className = "cart2bom-item-name";
     const manufacturer = input(targetDocument, item.manufacturerName ?? "", `${item.orderCode}のメーカー名`);
     const mpn = input(targetDocument, item.manufacturerPartNumber ?? "", `${item.orderCode}のメーカー型番`);
     const salesUnit = input(targetDocument, item.salesUnit ?? "", `${item.orderCode}の販売単位`);
@@ -107,27 +127,90 @@ export function openCartEditor(targetDocument: Document, options: CartEditorOpti
     quantity.type = "number";
     quantity.min = "1";
     quantity.step = "1";
-    const note = input(targetDocument, item.note, `${item.orderCode}の備考`);
+    const note = textarea(targetDocument, item.note, `${item.orderCode}の備考`);
+    note.className = "cart2bom-item-note";
     const link = targetDocument.createElement("a");
     link.href = item.productUrl;
     link.target = "_blank";
     link.rel = "noopener noreferrer";
-    link.textContent = "開く";
+    link.textContent = "商品ページ";
+    const product = targetDocument.createElement("div");
+    product.className = "cart2bom-editor-product";
+    const image = createProductImage(targetDocument, item);
+    const imageArea = targetDocument.createElement("div");
+    imageArea.className = "cart2bom-editor-product-image";
+    if (image) {
+      const imageLink = link.cloneNode(true) as HTMLAnchorElement;
+      imageLink.textContent = "";
+      imageLink.setAttribute("aria-label", `${item.name}の商品ページを開く`);
+      imageLink.append(image);
+      imageArea.append(imageLink);
+    } else {
+      imageArea.textContent = "—";
+    }
+    const productMain = targetDocument.createElement("div");
+    productMain.className = "cart2bom-editor-product-main";
+    const code = targetDocument.createElement("span");
+    code.className = "cart2bom-item-code";
+    code.textContent = `通販コード ${item.orderCode}`;
+    const detail = targetDocument.createElement("details");
+    detail.className = "cart2bom-item-details";
+    const detailSummary = targetDocument.createElement("summary");
+    const refreshDetailSummary = (): void => {
+      detailSummary.textContent = `メーカー ${manufacturer.value.trim() || "—"} ／ 型番 ${mpn.value.trim() || "—"}`;
+    };
+    const manufacturerLabel = targetDocument.createElement("label");
+    manufacturerLabel.textContent = "メーカー名";
+    manufacturerLabel.append(manufacturer);
+    const mpnLabel = targetDocument.createElement("label");
+    mpnLabel.textContent = "メーカー型番";
+    mpnLabel.append(mpn);
+    manufacturer.addEventListener("input", refreshDetailSummary);
+    mpn.addEventListener("input", refreshDetailSummary);
+    refreshDetailSummary();
+    detail.append(detailSummary, manufacturerLabel, mpnLabel);
+    productMain.append(code, itemName, link, detail);
+    product.append(imageArea, productMain);
+
+    const quantityGroup = targetDocument.createElement("div");
+    quantityGroup.className = "cart2bom-editor-quantity";
+    const quantityLabel = targetDocument.createElement("label");
+    quantityLabel.textContent = "数量";
+    quantityLabel.append(quantity);
+    const salesUnitLabel = targetDocument.createElement("label");
+    salesUnitLabel.textContent = "販売単位";
+    salesUnitLabel.append(salesUnit);
+    quantityGroup.append(quantityLabel, salesUnitLabel);
+
+    const price = targetDocument.createElement("div");
+    price.className = "cart2bom-editor-price";
+    const unitPrice = targetDocument.createElement("span");
+    unitPrice.textContent = item.unitPrice === null
+      ? "単価 —"
+      : `単価 ${item.unitPrice.toLocaleString("ja-JP")}円`;
+    const subtotal = targetDocument.createElement("strong");
+    price.append(unitPrice, subtotal);
     const remove = createButton(targetDocument, "削除", "danger");
-    const values: Array<Node> = [
-      selected, image, targetDocument.createTextNode(item.orderCode), itemName,
-      manufacturer, mpn, salesUnit, quantity,
-      targetDocument.createTextNode(item.unitPrice?.toLocaleString("ja-JP") ?? "—"),
-      targetDocument.createTextNode(item.subtotal?.toLocaleString("ja-JP") ?? "—"),
-      note, link, remove,
+    const values: Array<{ value: Node; className: string }> = [
+      { value: selected, className: "select" },
+      { value: product, className: "product" },
+      { value: quantityGroup, className: "quantity" },
+      { value: price, className: "price" },
+      { value: note, className: "note" },
+      { value: remove, className: "remove" },
     ];
-    for (const value of values) {
+    for (const { value, className } of values) {
       const cell = targetDocument.createElement("td");
+      cell.className = `cart2bom-col-${className}`;
       cell.append(value);
       row.append(cell);
     }
-    remove.addEventListener("click", () => { row.remove(); refreshTotal(); });
-    records.push({ source: item, selected, name: itemName, quantity, manufacturer, mpn, salesUnit, note, row });
+    remove.addEventListener("click", () => {
+      row.remove();
+      refreshSelectionState();
+      refreshTotal();
+    });
+    records.push({ source: item, selected, name: itemName, quantity, manufacturer, mpn, salesUnit, note, subtotal, row });
     tbody.append(row);
   }
   table.append(thead, tbody);
@@ -137,23 +220,45 @@ export function openCartEditor(targetDocument: Document, options: CartEditorOpti
   total.className = "cart2bom-list-total";
   refreshTotal = () => {
     const selectedItems = records.flatMap((record) => {
-      if (!record.row.parentElement || !record.selected.checked) return [];
       const quantity = Number(record.quantity.value);
-      if (!validateQuantity(quantity)) return [];
+      const calculatedSubtotal = validateQuantity(quantity)
+        ? record.source.unitPrice === null
+          ? record.source.subtotal
+          : record.source.unitPrice * quantity
+        : null;
+      record.subtotal.textContent = calculatedSubtotal === null
+        ? "小計 —"
+        : `小計 ${calculatedSubtotal.toLocaleString("ja-JP")}円`;
+      if (!record.row.parentElement || !record.selected.checked || !validateQuantity(quantity)) return [];
       return [{
         ...record.source,
         quantity,
-        subtotal: record.source.unitPrice === null
-          ? record.source.subtotal
-          : record.source.unitPrice * quantity,
+        subtotal: calculatedSubtotal,
       }];
     });
     total.textContent = formatListTotal(calculateListTotal(selectedItems));
   };
+  refreshSelectionState = () => {
+    const active = records.filter((record) => record.row.parentElement);
+    const selectedCount = active.filter((record) => record.selected.checked).length;
+    selectAll.checked = active.length > 0 && selectedCount === active.length;
+    selectAll.indeterminate = selectedCount > 0 && selectedCount < active.length;
+  };
   for (const record of records) {
-    record.selected.addEventListener("change", refreshTotal);
+    record.selected.addEventListener("change", () => {
+      refreshSelectionState();
+      refreshTotal();
+    });
     record.quantity.addEventListener("input", refreshTotal);
   }
+  selectAll.addEventListener("change", () => {
+    for (const record of records) {
+      if (record.row.parentElement) record.selected.checked = selectAll.checked;
+    }
+    refreshSelectionState();
+    refreshTotal();
+  });
+  refreshSelectionState();
   refreshTotal();
 
   const error = targetDocument.createElement("p");

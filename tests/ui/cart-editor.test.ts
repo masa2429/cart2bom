@@ -24,13 +24,23 @@ describe("openCartEditor", () => {
     const salesUnit = document.querySelector<HTMLInputElement>('input[aria-label="105148の販売単位"]');
     if (!listName || !quantity || !manufacturer || !mpn || !salesUnit) throw new Error("テスト対象の入力欄がありません。");
     expect(document.querySelector<HTMLImageElement>(".cart2bom-product-image")?.src).toBe("https://example.test/item.jpg");
+    expect(document.querySelector<HTMLAnchorElement>('.cart2bom-editor-product-image a')?.href)
+      .toBe("https://example.test/item");
+    expect(Array.from(document.querySelectorAll("th"), (heading) => heading.firstChild?.textContent))
+      .toEqual(["選択", "商品", "数量", "金額", "備考", "削除"]);
+    expect(document.querySelector(".cart2bom-item-details summary")?.textContent)
+      .toBe("メーカー 旧メーカー ／ 型番 OLD-1");
     expect(document.querySelector(".cart2bom-list-total")?.textContent).toBe("合計 100円");
     listName.value = "保存名";
     quantity.value = "2";
     quantity.dispatchEvent(new Event("input"));
     manufacturer.value = "新メーカー";
+    manufacturer.dispatchEvent(new Event("input"));
     mpn.value = "NEW-2";
+    mpn.dispatchEvent(new Event("input"));
     salesUnit.value = "1袋10個入";
+    expect(document.querySelector(".cart2bom-item-details summary")?.textContent)
+      .toBe("メーカー 新メーカー ／ 型番 NEW-2");
     expect(document.querySelector(".cart2bom-list-total")?.textContent).toBe("合計 200円");
     const save = Array.from(document.querySelectorAll("button")).find((button) => button.textContent === "リストを保存");
     save?.click();
@@ -45,6 +55,23 @@ describe("openCartEditor", () => {
         subtotal: 200,
       })],
     }));
+  });
+
+  it("全選択で保存対象をまとめて切り替える", () => {
+    openCartEditor(document, { items: [item], onSave: vi.fn(async () => undefined) });
+    const selectAll = document.querySelector<HTMLInputElement>('input[aria-label="すべての商品を選択"]');
+    const selected = document.querySelector<HTMLInputElement>('input[aria-label="105148を選択"]');
+    if (!selectAll || !selected) throw new Error("テスト対象の選択欄がありません。");
+
+    selectAll.checked = false;
+    selectAll.dispatchEvent(new Event("change"));
+    expect(selected.checked).toBe(false);
+    expect(document.querySelector(".cart2bom-list-total")?.textContent).toBe("合計 0円");
+
+    selectAll.checked = true;
+    selectAll.dispatchEvent(new Event("change"));
+    expect(selected.checked).toBe(true);
+    expect(document.querySelector(".cart2bom-list-total")?.textContent).toBe("合計 100円");
   });
 
   it("数量0を拒否する", async () => {

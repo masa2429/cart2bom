@@ -76,8 +76,25 @@ export const CART2BOM_STYLES = `
 .cart2bom-table-wrap { max-height: 52vh; overflow: auto; border: 1px solid #dadce0; }
 .cart2bom-table-wrap table { width: 100%; border-collapse: collapse; font-size: 12px; }
 .cart2bom-table-wrap th { position: sticky; top: 0; z-index: 1; background: #f1f3f4; }
-.cart2bom-table-wrap th, .cart2bom-table-wrap td { min-width: 80px; border-bottom: 1px solid #dadce0; padding: 7px; text-align: left; vertical-align: middle; }
-.cart2bom-table-wrap th:first-child, .cart2bom-table-wrap td:first-child { min-width: 44px; }
+.cart2bom-table-wrap th, .cart2bom-table-wrap td { border-bottom: 1px solid #dadce0; padding: 9px; text-align: left; vertical-align: middle; }
+.cart2bom-col-select { width: 48px; text-align: center !important; }
+.cart2bom-col-product { width: 42%; min-width: 330px; }
+.cart2bom-col-quantity { width: 150px; min-width: 135px; }
+.cart2bom-col-price { width: 120px; min-width: 105px; }
+.cart2bom-col-note { width: 190px; min-width: 150px; }
+.cart2bom-col-remove { width: 72px; text-align: center !important; }
+.cart2bom-editor-product { display: grid; grid-template-columns: 66px minmax(0, 1fr); align-items: start; gap: 10px; }
+.cart2bom-editor-product-image { display: grid; min-height: 66px; place-items: center; }
+.cart2bom-editor-product-main { display: grid; min-width: 0; gap: 6px; }
+.cart2bom-item-code { color: #5f6368; font-size: 11px; }
+.cart2bom-item-name { width: 100% !important; font-weight: 600; }
+.cart2bom-item-details { color: #3c4043; }
+.cart2bom-item-details summary { cursor: pointer; }
+.cart2bom-item-details label, .cart2bom-editor-quantity label { display: grid; gap: 3px; color: #5f6368; font-size: 11px; }
+.cart2bom-item-details label { margin-top: 6px; }
+.cart2bom-editor-quantity, .cart2bom-editor-price { display: grid; gap: 8px; }
+.cart2bom-editor-price strong { font-size: 13px; }
+.cart2bom-item-note { box-sizing: border-box; width: 100%; min-height: 58px; border: 1px solid #9aa0a6; border-radius: 5px; padding: 7px; color: #202124; background: #ffffff; font: inherit; resize: vertical; }
 .cart2bom-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
 .cart2bom-list-actions { align-items: flex-start; }
 .cart2bom-action-menu { position: relative; }
