@@ -113,26 +113,43 @@ describe("MisumiAdapter", () => {
     const next = document.querySelector<HTMLButtonElement>('[data-testid="next-button"]');
     textarea?.addEventListener("input", () => next?.removeAttribute("disabled"));
     next?.addEventListener("click", () => {
-      const progressNext = document.createElement("button");
-      progressNext.dataset.testid = "progress-modal-next-input";
-      progressNext.disabled = true;
-      progressNext.textContent = "次へ";
-      progressNext.addEventListener("click", () => {
-        const addToCart = document.createElement("button");
-        addToCart.dataset.testid = "add-to-cart-button";
-        addToCart.addEventListener("click", () => {
-          const cartLink = document.createElement("a");
-          cartLink.href = "/order/cart";
-          document.body.append(cartLink);
-        });
-        document.body.append(addToCart);
+      const mappingSelects = ["型番 【必須】", "数量 【必須】", "取り込み不要"].map((selected) => {
+        const select = document.createElement("select");
+        for (const label of ["取り込み不要", "型番 【必須】", "数量 【必須】", "メーカー名"]) {
+          const option = document.createElement("option");
+          option.value = label;
+          option.textContent = label;
+          option.selected = label === selected;
+          select.append(option);
+        }
+        document.body.append(select);
+        return select;
       });
-      document.body.append(progressNext);
-      window.setTimeout(() => progressNext.removeAttribute("disabled"), 10);
+      const mappingNext = document.createElement("button");
+      mappingNext.dataset.testid = "mapping-item-modal-next-button";
+      mappingNext.addEventListener("click", () => {
+        expect(mappingSelects[2]?.value).toBe("メーカー名");
+        const progressNext = document.createElement("button");
+        progressNext.dataset.testid = "progress-modal-next-input";
+        progressNext.disabled = true;
+        progressNext.addEventListener("click", () => {
+          const addToCart = document.createElement("button");
+          addToCart.dataset.testid = "add-to-cart-button";
+          addToCart.addEventListener("click", () => {
+            const cartLink = document.createElement("a");
+            cartLink.href = "/order/cart";
+            document.body.append(cartLink);
+          });
+          document.body.append(addToCart);
+        });
+        document.body.append(progressNext);
+        window.setTimeout(() => progressNext.removeAttribute("disabled"), 10);
+      });
+      document.body.append(mappingNext);
     });
 
     const navigationWarning = vi.spyOn(console, "error").mockImplementation(() => undefined);
-    await expect(new MisumiAdapter(undefined, 500).submitQuickOrder(
+    await expect(new MisumiAdapter(undefined, 2_000).submitQuickOrder(
       document,
       "DR1-2000在庫品\t1\t小原歯車工業",
     )).resolves.toBe(1);

@@ -149,6 +149,14 @@ export class MisumiAdapter implements StoreAdapter {
       'button[data-testid="next-button"]:not([disabled])',
     );
     next.click();
+    const mappingNext = await this.waitForElement<HTMLButtonElement>(
+      targetDocument,
+      'button[data-testid="mapping-item-modal-next-button"]:not([disabled])',
+      15_000,
+    );
+    this.selectManufacturerColumn(targetDocument);
+    await this.pause(targetDocument, 500);
+    mappingNext.click();
     // MISUMI renders this button while the pasted rows are still being processed.
     // Wait until processing finishes and the button is enabled before advancing.
     const progressNext = await this.waitForElement<HTMLButtonElement>(
@@ -156,6 +164,7 @@ export class MisumiAdapter implements StoreAdapter {
       'button[data-testid="progress-modal-next-input"]:not([disabled])',
       15_000,
     );
+    await this.pause(targetDocument, 500);
     progressNext.click();
     const addToCart = await this.waitForElement<HTMLButtonElement>(
       targetDocument,
@@ -166,6 +175,25 @@ export class MisumiAdapter implements StoreAdapter {
     await this.waitForElement(targetDocument, 'a[href="/order/cart"]', 20_000);
     targetDocument.location.assign(this.getCartUrl());
     return rows.length;
+  }
+
+  /** Maps the third pasted column to MISUMI's manufacturer field. */
+  private selectManufacturerColumn(targetDocument: Document): void {
+    const mappingSelects = Array.from(targetDocument.querySelectorAll<HTMLSelectElement>("select"))
+      .filter((select) => {
+        const labels = Array.from(select.options).map((option) => normalizeText(option.textContent));
+        return labels.includes("型番 【必須】") && labels.includes("メーカー名");
+      });
+    const manufacturerSelect = mappingSelects[mappingSelects.length - 1];
+    const manufacturerOption = manufacturerSelect
+      ? Array.from(manufacturerSelect.options)
+        .find((option) => normalizeText(option.textContent) === "メーカー名")
+      : undefined;
+    if (!manufacturerSelect || !manufacturerOption) return;
+    manufacturerSelect.value = manufacturerOption.value;
+    const EventConstructor = targetDocument.defaultView?.Event ?? Event;
+    manufacturerSelect.dispatchEvent(new EventConstructor("input", { bubbles: true }));
+    manufacturerSelect.dispatchEvent(new EventConstructor("change", { bubbles: true }));
   }
 
   public extractCart(targetDocument: Document): CartExtractionResult {
@@ -262,5 +290,12 @@ export class MisumiAdapter implements StoreAdapter {
         schedule(resolve, 100);
       });
     }
+  }
+
+  private async pause(targetDocument: Document, durationMs: number): Promise<void> {
+    await new Promise<void>((resolve) => {
+      const schedule = targetDocument.defaultView?.setTimeout.bind(targetDocument.defaultView) ?? setTimeout;
+      schedule(resolve, durationMs);
+    });
   }
 }
