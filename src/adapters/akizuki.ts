@@ -6,7 +6,8 @@ import type {
 } from "./adapter";
 
 const PRODUCT_LINK_SELECTOR = 'a[href*="/catalog/g/g"]';
-const ITEM_CONTAINER_SELECTOR = "[data-cart-item], .cart-item, tr, li";
+// Current Akizuki rows plus explicit fixture/adapter extension hooks.
+const ITEM_CONTAINER_SELECTOR = "tr.block-cart--goods-list, [data-cart-item], .cart-item";
 const ORDER_CODE_PATTERN = /\/catalog\/g\/g(\d{6})(?:\/|[?#]|$)/i;
 
 function normalizeText(value: string | null | undefined): string {
@@ -119,9 +120,11 @@ export class AkizukiAdapter implements StoreAdapter {
 
   /** Extracts one item per product container and reports incomplete rows. */
   public extractCart(targetDocument: Document): CartExtractionResult {
-    const links = Array.from(
-      targetDocument.querySelectorAll<HTMLAnchorElement>(PRODUCT_LINK_SELECTOR),
-    );
+    // Scope product links to cart rows so recommendations below the cart are not warned about.
+    const links = Array.from(targetDocument.querySelectorAll(ITEM_CONTAINER_SELECTOR))
+      .flatMap((container) =>
+        Array.from(container.querySelectorAll<HTMLAnchorElement>(PRODUCT_LINK_SELECTOR)),
+      );
     const containers = new Map<Element, { code: string; link: HTMLAnchorElement }>();
     const warnings: ExtractionWarning[] = [];
 

@@ -1,4 +1,5 @@
 import type { CartItem, SavedList } from "../core/models";
+import type { ExtractionWarning } from "../adapters/adapter";
 import { calculateListTotal, formatListTotal } from "../core/totals";
 import { validateQuantity } from "../core/validation";
 import { createButton, openModal } from "./modal";
@@ -13,6 +14,7 @@ export interface CartEditorValue {
 
 export interface CartEditorOptions {
   items: CartItem[];
+  warnings?: ExtractionWarning[];
   existingList?: SavedList;
   onSave(value: CartEditorValue): Promise<void>;
 }
@@ -48,6 +50,23 @@ export function openCartEditor(targetDocument: Document, options: CartEditorOpti
     label.textContent = labelText;
     label.append(element);
     form.append(label);
+  }
+
+  const warningDetails = targetDocument.createElement("details");
+  warningDetails.className = "cart2bom-warning-details";
+  if ((options.warnings?.length ?? 0) > 0) {
+    warningDetails.open = true;
+    const summary = targetDocument.createElement("summary");
+    summary.textContent = `読み取り警告（${options.warnings?.length ?? 0}件）`;
+    const list = targetDocument.createElement("ul");
+    for (const warning of options.warnings ?? []) {
+      const item = targetDocument.createElement("li");
+      item.textContent = warning.itemHint
+        ? `${warning.itemHint}: ${warning.message}`
+        : warning.message;
+      list.append(item);
+    }
+    warningDetails.append(summary, list);
   }
 
   const tableWrap = targetDocument.createElement("div");
@@ -190,5 +209,7 @@ export function openCartEditor(targetDocument: Document, options: CartEditorOpti
     }
   });
   actions.append(save, cancel);
-  modal.content.append(form, tableWrap, total, error, actions);
+  modal.content.append(form);
+  if (warningDetails.childElementCount > 0) modal.content.append(warningDetails);
+  modal.content.append(tableWrap, total, error, actions);
 }

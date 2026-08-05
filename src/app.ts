@@ -178,9 +178,9 @@ export function startCart2BOM(): void {
           return;
         }
         if (result.warnings.length > 0) {
-          showToast(document, `${result.items.length}商品を取得しました。${result.warnings.length}件の警告があります。`);
+          showToast(document, `${result.items.length}商品を取得しました。警告の詳細を確認画面に表示しました。`);
         }
-        openCartEditor(document, { items: result.items, onSave: saveNewList });
+        openCartEditor(document, { items: result.items, warnings: result.warnings, onSave: saveNewList });
       },
       onSavedLists: () => void showLists(),
       onImport: () => openImportDialog(document, async (list) => {

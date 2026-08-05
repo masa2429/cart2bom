@@ -61,6 +61,17 @@ describe("AkizukiAdapter", () => {
     }));
   });
 
+  it("カート外の最近チェックした商品を警告対象にしない", () => {
+    const recent = document.createElement("section");
+    recent.innerHTML = '<ul><li><a href="/catalog/g/g131155/">最近チェックした商品</a></li></ul>';
+    document.body.append(recent);
+
+    const result = new AkizukiAdapter().extractCart(document);
+
+    expect(result.detectedCount).toBe(3);
+    expect(result.warnings).not.toContainEqual(expect.objectContaining({ itemHint: "131155" }));
+  });
+
   it("空のカートを処理する", () => {
     document.body.replaceChildren();
     expect(new AkizukiAdapter().extractCart(document)).toEqual({

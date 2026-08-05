@@ -92,7 +92,7 @@ UserScriptヘッダーの例：
 // ==UserScript==
 // @name         Cart2BOM
 // @namespace    cart2bom
-// @version      0.1.1
+// @version      0.1.2
 // @author       morita_masato
 // @description  通販サイトのカートを保存・共有・再利用します
 // @match        https://akizukidenshi.com/*
@@ -374,6 +374,7 @@ GitHub
 ```
 
 エラーはモーダル内またはダイアログで詳細を表示する．
+読み取り警告がある場合は件数だけでなく、対象商品の手掛かりと理由を読み取り結果モーダル内へ表示する．
 
 ---
 

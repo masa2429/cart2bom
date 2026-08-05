@@ -58,4 +58,21 @@ describe("openCartEditor", () => {
     expect(document.querySelector(".cart2bom-error")?.textContent).toContain("正の整数");
     expect(onSave).not.toHaveBeenCalled();
   });
+
+  it("読み取り警告の対象商品と内容を表示する", () => {
+    openCartEditor(document, {
+      items: [item],
+      warnings: [{
+        code: "quantity-not-found",
+        message: "数量を取得できませんでした。",
+        itemHint: "999999",
+      }],
+      onSave: vi.fn(async () => undefined),
+    });
+
+    expect(document.querySelector(".cart2bom-warning-details summary")?.textContent)
+      .toBe("読み取り警告（1件）");
+    expect(document.querySelector(".cart2bom-warning-details li")?.textContent)
+      .toBe("999999: 数量を取得できませんでした。");
+  });
 });

@@ -80,6 +80,9 @@ export const CART2BOM_STYLES = `
 .cart2bom-table-wrap th:first-child, .cart2bom-table-wrap td:first-child { min-width: 44px; }
 .cart2bom-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
 .cart2bom-error { min-height: 1.5em; color: #b3261e; }
+.cart2bom-warning-details { margin: 0 0 14px; border: 1px solid #c58b00; border-radius: 7px; padding: 9px 12px; color: #5f4200; background: #fff8e1; }
+.cart2bom-warning-details summary { font-weight: 700; cursor: pointer; }
+.cart2bom-warning-details ul { margin: 8px 0 0; padding-left: 22px; }
 .cart2bom-list-grid { display: grid; gap: 12px; }
 .cart2bom-list-card { border: 1px solid #dadce0; border-radius: 8px; padding: 14px; }
 .cart2bom-list-card h3, .cart2bom-list-card p { margin: 0 0 6px; }
