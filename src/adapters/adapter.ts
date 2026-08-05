@@ -21,7 +21,6 @@ export interface StoreAdapter {
   getCartUrl(): string | null;
   prepareCart?(document: Document): Promise<void>;
   extractCart(document: Document): CartExtractionResult;
-  readonly quickOrderName?: string;
   readonly quickOrderCodeRequirement?: string;
   readonly quickOrderCapacity?: number;
   validateQuickOrderCode?(code: string): boolean;

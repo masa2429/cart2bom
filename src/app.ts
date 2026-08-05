@@ -73,7 +73,6 @@ export function startCart2BOM(): void {
       openSavedLists(document, lists, {
         confirmBeforeDelete: settings.confirmBeforeDelete,
         quickOrderAvailable: typeof adapter.createQuickOrderText === "function",
-        quickOrderLabel: adapter.quickOrderName ?? "クイックオーダー",
         quickOrderAutoFill: typeof adapter.fillQuickOrder === "function",
         quickOrderAutoSubmit: typeof adapter.submitQuickOrder === "function",
         onOpen: openExisting,
@@ -129,22 +128,6 @@ export function startCart2BOM(): void {
               ? "クイックオーダー画面を開き、入力内容を準備しました。"
               : "一括注文テキストをコピーしました。",
           );
-        },
-        onDefaultExport: async (list) => {
-          if (settings.defaultExportFormat === "quickOrder") {
-            await copyText(document, exportQuickOrder(list, adapter));
-            showToast(document, "クリップボードへコピーしました。");
-            return;
-          }
-          const format = settings.defaultExportFormat;
-          const exporters = {
-            csv: { text: exportCsv(list), extension: "csv", mime: "text/csv" },
-            tsv: { text: exportTsv(list), extension: "tsv", mime: "text/tab-separated-values" },
-            json: { text: exportJson(list), extension: "json", mime: "application/json" },
-          } as const;
-          const output = exporters[format];
-          downloadText(document, output.text, `${safeFileName(list.name)}.${output.extension}`, output.mime);
-          showToast(document, `${output.extension.toUpperCase()}ファイルを保存しました。`);
         },
       });
     } catch (error) {

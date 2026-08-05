@@ -66,7 +66,6 @@ export class MisumiAdapter implements StoreAdapter {
   public readonly id = "misumi";
   public readonly name = "ミスミ";
   public readonly listNamePrefix = "ミスミカート";
-  public readonly quickOrderName = "ミスミ見積・注文";
   public readonly quickOrderCodeRequirement = "型番は256文字以内で、タブと改行を含めない必要があります。";
 
   public constructor(

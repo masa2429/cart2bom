@@ -22,25 +22,13 @@ export function openSettings(
   sideLabel.textContent = "固定ボタンの位置";
   sideLabel.append(side);
 
-  const format = targetDocument.createElement("select");
-  for (const [value, label] of [["csv", "CSV"], ["tsv", "TSV"], ["json", "JSON"], ["quickOrder", "クイックオーダー"]] as const) {
-    const option = targetDocument.createElement("option");
-    option.value = value;
-    option.textContent = label;
-    format.append(option);
-  }
-  format.value = current.defaultExportFormat;
-  const formatLabel = targetDocument.createElement("label");
-  formatLabel.textContent = "既定の出力形式";
-  formatLabel.append(format);
-
   const confirmDelete = targetDocument.createElement("input");
   confirmDelete.type = "checkbox";
   confirmDelete.checked = current.confirmBeforeDelete;
   const confirmLabel = targetDocument.createElement("label");
   confirmLabel.className = "cart2bom-checkbox-label";
   confirmLabel.append(confirmDelete, targetDocument.createTextNode("削除前に確認する"));
-  form.append(sideLabel, formatLabel, confirmLabel);
+  form.append(sideLabel, confirmLabel);
 
   const error = targetDocument.createElement("p");
   error.className = "cart2bom-error";
@@ -52,7 +40,6 @@ export function openSettings(
         ...current,
         buttonSide: side.value === "left" ? "left" : "right",
         confirmBeforeDelete: confirmDelete.checked,
-        defaultExportFormat: format.value as AppSettings["defaultExportFormat"],
       });
       modal.close();
     } catch (caught) {

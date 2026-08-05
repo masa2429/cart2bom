@@ -73,7 +73,6 @@ export class MonotaroAdapter implements StoreAdapter {
   public readonly id = "monotaro";
   public readonly name = "モノタロウ";
   public readonly listNamePrefix = "モノタロウカート";
-  public readonly quickOrderName = "モノタロウクイックオーダー";
   public readonly quickOrderCodeRequirement = "注文コードは8桁の数字である必要があります。";
   public readonly quickOrderCapacity = 10;
 

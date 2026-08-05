@@ -49,7 +49,6 @@ describe("openSavedLists", () => {
       onExport: vi.fn(),
       onCopyQuickOrder: vi.fn(async () => undefined),
       onOpenQuickOrder: vi.fn(async () => undefined),
-      onDefaultExport: vi.fn(),
     };
 
     openSavedLists(document, [list], actions);
@@ -71,7 +70,6 @@ describe("openSavedLists", () => {
       onExport: vi.fn(),
       onCopyQuickOrder: vi.fn(async () => undefined),
       onOpenQuickOrder: vi.fn(async () => undefined),
-      onDefaultExport: vi.fn(),
     };
 
     openSavedLists(document, [list], actions);
@@ -79,11 +77,10 @@ describe("openSavedLists", () => {
     expect(document.body.textContent).not.toContain("秋月一括注文");
   });
 
-  it("店舗別のクイックオーダー名をボタンへ表示する", () => {
+  it("一括注文関連の操作を簡潔な名前で表示する", () => {
     const actions: SavedListActions = {
       confirmBeforeDelete: true,
       quickOrderAvailable: true,
-      quickOrderLabel: "モノタロウクイックオーダー",
       quickOrderAutoFill: true,
       onOpen: vi.fn(),
       onDuplicate: vi.fn(async () => undefined),
@@ -92,20 +89,18 @@ describe("openSavedLists", () => {
       onExport: vi.fn(),
       onCopyQuickOrder: vi.fn(async () => undefined),
       onOpenQuickOrder: vi.fn(async () => undefined),
-      onDefaultExport: vi.fn(),
     };
 
     openSavedLists(document, [list], actions);
 
-    expect(document.body.textContent).toContain("モノタロウクイックオーダーをコピー");
-    expect(document.body.textContent).toContain("モノタロウクイックオーダー画面へ入力");
+    expect(document.body.textContent).toContain("一括注文テキストをコピー");
+    expect(document.body.textContent).toContain("一括注文画面へ入力");
   });
 
   it("自動送信対応店舗ではバスケットへの自動追加を明示する", () => {
     openSavedLists(document, [list], {
       confirmBeforeDelete: true,
       quickOrderAvailable: true,
-      quickOrderLabel: "モノタロウクイックオーダー",
       quickOrderAutoSubmit: true,
       onOpen: vi.fn(),
       onDuplicate: vi.fn(async () => undefined),
@@ -114,10 +109,40 @@ describe("openSavedLists", () => {
       onExport: vi.fn(),
       onCopyQuickOrder: vi.fn(async () => undefined),
       onOpenQuickOrder: vi.fn(async () => undefined),
-      onDefaultExport: vi.fn(),
     });
 
-    expect(document.body.textContent).toContain("モノタロウクイックオーダーからバスケットへ自動追加");
+    expect(document.body.textContent).toContain("バスケットへ追加");
+  });
+
+  it("主要操作だけを直接表示し、残りをメニューへまとめる", () => {
+    const onExport = vi.fn();
+    openSavedLists(document, [list], {
+      confirmBeforeDelete: true,
+      quickOrderAvailable: true,
+      quickOrderAutoSubmit: true,
+      onOpen: vi.fn(),
+      onDuplicate: vi.fn(async () => undefined),
+      onRename: vi.fn(async () => undefined),
+      onDelete: vi.fn(async () => undefined),
+      onExport,
+      onCopyQuickOrder: vi.fn(async () => undefined),
+      onOpenQuickOrder: vi.fn(async () => undefined),
+    });
+
+    const directButtons = Array.from(document.querySelectorAll<HTMLButtonElement>(
+      ".cart2bom-list-actions > .cart2bom-button",
+    )).map((button) => button.textContent);
+    expect(directButtons).toEqual(["開く", "バスケットへ追加"]);
+    expect(Array.from(document.querySelectorAll(".cart2bom-action-menu summary"))
+      .map((summary) => summary.textContent)).toEqual(["出力 ▾", "その他 ▾"]);
+    expect(document.body.textContent).not.toContain("既定形式で出力");
+    expect(document.querySelectorAll(".cart2bom-action-menu-panel")[1]?.textContent)
+      .toContain("削除");
+    const csv = Array.from(document.querySelectorAll<HTMLButtonElement>(
+      ".cart2bom-action-menu-panel .cart2bom-button",
+    )).find((button) => button.textContent === "CSV出力");
+    csv?.click();
+    expect(onExport).toHaveBeenCalledWith(list, "csv");
   });
 
   it("現在の店舗の商品を含むリストだけへ絞り込む", () => {

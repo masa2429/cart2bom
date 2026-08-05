@@ -101,7 +101,6 @@ export class AkizukiAdapter implements StoreAdapter {
   public readonly id = "akizuki";
   public readonly name = "秋月電子通商";
   public readonly listNamePrefix = "秋月カート";
-  public readonly quickOrderName = "秋月一括注文";
   public readonly quickOrderCodeRequirement = "通販コードは6桁の数字である必要があります。";
 
   public constructor(private readonly now: () => Date = () => new Date()) {}

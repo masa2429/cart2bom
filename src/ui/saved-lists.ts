@@ -6,7 +6,6 @@ import { createProductImage } from "./product-image";
 export interface SavedListActions {
   confirmBeforeDelete: boolean;
   quickOrderAvailable?: boolean;
-  quickOrderLabel?: string;
   quickOrderAutoFill?: boolean;
   quickOrderAutoSubmit?: boolean;
   onOpen(list: SavedList): void;
@@ -16,11 +15,39 @@ export interface SavedListActions {
   onExport(list: SavedList, format: "csv" | "tsv" | "json" | "markdown"): void;
   onCopyQuickOrder(list: SavedList): Promise<void>;
   onOpenQuickOrder(list: SavedList): Promise<void>;
-  onDefaultExport(list: SavedList): Promise<void> | void;
 }
 
 export function filterSavedListsByStore(lists: SavedList[], storeId: string): SavedList[] {
   return lists.filter((list) => list.items.some((item) => item.storeId === storeId));
+}
+
+function createActionMenu(
+  targetDocument: Document,
+  label: string,
+): { details: HTMLDetailsElement; panel: HTMLDivElement } {
+  const details = targetDocument.createElement("details");
+  details.className = "cart2bom-action-menu";
+  const summary = targetDocument.createElement("summary");
+  summary.className = "cart2bom-button cart2bom-button-secondary";
+  summary.textContent = `${label} ▾`;
+  const panel = targetDocument.createElement("div");
+  panel.className = "cart2bom-action-menu-panel";
+  details.append(summary, panel);
+  details.addEventListener("toggle", () => {
+    if (!details.open) return;
+    for (const other of targetDocument.querySelectorAll<HTMLDetailsElement>(".cart2bom-action-menu[open]")) {
+      if (other !== details) other.open = false;
+    }
+  });
+  return { details, panel };
+}
+
+function appendMenuButton(
+  menu: { details: HTMLDetailsElement; panel: HTMLDivElement },
+  button: HTMLButtonElement,
+): void {
+  button.addEventListener("click", () => { menu.details.open = false; });
+  menu.panel.append(button);
 }
 
 export function openSavedLists(
@@ -56,7 +83,7 @@ export function openSavedLists(
       images.append(image);
     }
     const buttons = targetDocument.createElement("div");
-    buttons.className = "cart2bom-actions";
+    buttons.className = "cart2bom-actions cart2bom-list-actions";
     const open = createButton(targetDocument, "開く", "primary");
     open.addEventListener("click", () => { modal.close(); actions.onOpen(list); });
     const rename = createButton(targetDocument, "名前変更");
@@ -77,13 +104,13 @@ export function openSavedLists(
       try { await actions.onDelete(list); card.remove(); }
       catch (error) { status.textContent = error instanceof Error ? error.message : "削除に失敗しました。"; }
     });
+    const exportMenu = createActionMenu(targetDocument, "出力");
     for (const [label, format] of [["CSV", "csv"], ["TSV", "tsv"], ["JSON", "json"], ["Markdown", "markdown"]] as const) {
       const exportButton = createButton(targetDocument, `${label}出力`);
       exportButton.addEventListener("click", () => actions.onExport(list, format));
-      buttons.append(exportButton);
+      appendMenuButton(exportMenu, exportButton);
     }
-    const quickOrderLabel = actions.quickOrderLabel ?? "クイックオーダー";
-    const quickCopy = createButton(targetDocument, `${quickOrderLabel}をコピー`);
+    const quickCopy = createButton(targetDocument, "一括注文テキストをコピー");
     quickCopy.addEventListener("click", async () => {
       try { await actions.onCopyQuickOrder(list); }
       catch (error) { status.textContent = error instanceof Error ? error.message : "コピーに失敗しました。"; }
@@ -91,23 +118,26 @@ export function openSavedLists(
     const quickOpen = createButton(
       targetDocument,
       actions.quickOrderAutoSubmit
-        ? `${quickOrderLabel}からバスケットへ自動追加`
+        ? "バスケットへ追加"
         : actions.quickOrderAutoFill
-        ? `${quickOrderLabel}画面へ入力`
-        : `${quickOrderLabel}画面を開く`,
+        ? "一括注文画面へ入力"
+        : "一括注文画面を開く",
+      "primary",
     );
     quickOpen.addEventListener("click", async () => {
       try { await actions.onOpenQuickOrder(list); }
       catch (error) { status.textContent = error instanceof Error ? error.message : "一括注文画面を開けませんでした。"; }
     });
-    const defaultExport = createButton(targetDocument, "既定形式で出力", "primary");
-    defaultExport.addEventListener("click", async () => {
-      try { await actions.onDefaultExport(list); }
-      catch (error) { status.textContent = error instanceof Error ? error.message : "出力に失敗しました。"; }
-    });
-    buttons.prepend(open, defaultExport, rename, duplicate);
-    if (actions.quickOrderAvailable) buttons.append(quickCopy, quickOpen);
-    buttons.append(remove);
+    const otherMenu = createActionMenu(targetDocument, "その他");
+    appendMenuButton(otherMenu, rename);
+    appendMenuButton(otherMenu, duplicate);
+    appendMenuButton(otherMenu, remove);
+    buttons.append(open);
+    if (actions.quickOrderAvailable) {
+      buttons.append(quickOpen);
+      appendMenuButton(exportMenu, quickCopy);
+    }
+    buttons.append(exportMenu.details, otherMenu.details);
     card.append(title, meta);
     if (images.childElementCount > 0) card.append(images);
     card.append(buttons);
