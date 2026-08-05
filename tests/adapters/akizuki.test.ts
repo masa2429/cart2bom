@@ -81,33 +81,31 @@ describe("AkizukiAdapter", () => {
     });
   });
 
-  it("一括注文を秋月標準フォームから買い物かごへ送信する", () => {
+  it("ブランケットオーダーから買い物かごへ一括送信する", () => {
     document.body.innerHTML = `
-      <form id="quickorder_form" action="/catalog/cart/cart.aspx" method="GET">
-        <input name="crsirefo_hidden" value="test-token">
+      <form id="blanketorder_form" action="/catalog/quickorder/blanketorder.aspx" method="POST">
+        <textarea name="regist_goods"></textarea>
       </form>`;
     const submit = vi.spyOn(HTMLFormElement.prototype, "submit").mockImplementation(function (this: HTMLFormElement) {
       const data = new FormData(this);
-      expect(new URL(this.action).pathname).toBe("/catalog/cart/cart.aspx");
-      expect(this.method).toBe("get");
-      expect(data.get("crsirefo_hidden")).toBe("test-token");
-      expect(data.getAll("goods").slice(0, 3)).toEqual(["105148", "131939", ""]);
-      expect(data.getAll("qty").slice(0, 3)).toEqual(["2", "3", ""]);
-      expect(data.getAll("goods")).toHaveLength(30);
+      expect(new URL(this.action).pathname).toBe("/catalog/quickorder/blanketorder.aspx");
+      expect(this.method).toBe("post");
+      expect(data.get("regist_goods")).toBe("105148\t2\n131939\t3");
+      expect(data.get("blanketorder")).toBe("買い物かごに入れる");
     });
 
     const adapter = new AkizukiAdapter();
     expect(adapter.isQuickOrderPage(
-      new URL("https://akizukidenshi.com/catalog/quickorder/quickorder.aspx"),
+      new URL("https://akizukidenshi.com/catalog/quickorder/blanketorder.aspx"),
       document,
     )).toBe(true);
     expect(adapter.submitQuickOrder(document, "105148\t2\n131939\t3")).toBe(2);
     expect(submit).toHaveBeenCalledOnce();
   });
 
-  it("トークンのない一括注文画面では送信しない", () => {
-    document.body.innerHTML = '<form id="quickorder_form" action="/catalog/cart/cart.aspx"></form>';
+  it("入力欄のないブランケットオーダー画面では送信しない", () => {
+    document.body.innerHTML = '<form id="blanketorder_form" action="/catalog/quickorder/blanketorder.aspx"></form>';
     expect(() => new AkizukiAdapter().submitQuickOrder(document, "105148\t2"))
-      .toThrow("一括注文フォームを確認できませんでした");
+      .toThrow("ブランケットオーダーフォームを確認できませんでした");
   });
 });
