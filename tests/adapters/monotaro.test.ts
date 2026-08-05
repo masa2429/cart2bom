@@ -15,7 +15,11 @@ describe("MonotaroAdapter", () => {
     expect(adapter.matches(new URL("https://www.monotaro.com/"))).toBe(true);
     expect(adapter.matches(new URL("https://monotaro.com/"))).toBe(true);
     expect(adapter.isCartPage(new URL("https://www.monotaro.com/basket/"), document)).toBe(true);
+    expect(adapter.isCartPage(new URL("https://www.monotaro.com/monotaroMain.py"), document)).toBe(true);
     expect(adapter.isCartPage(new URL("https://www.monotaro.com/p/4781/7527/"), document)).toBe(false);
+    document.body.replaceChildren();
+    document.title = "入力エラー - MonotaRO";
+    expect(adapter.isCartPage(new URL("https://www.monotaro.com/monotaroMain.py"), document)).toBe(false);
   });
 
   it("円表記を整数へ変換する", () => {

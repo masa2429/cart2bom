@@ -83,8 +83,14 @@ export class MonotaroAdapter implements StoreAdapter {
     return /^(?:www\.)?monotaro\.com$/i.test(url.hostname);
   }
 
-  public isCartPage(url: URL, _document: Document): boolean {
-    return this.matches(url) && /^\/basket\/?$/i.test(url.pathname);
+  public isCartPage(url: URL, targetDocument: Document): boolean {
+    if (!this.matches(url)) return false;
+    if (/^\/basket\/?$/i.test(url.pathname)) return true;
+    return /^\/monotaroMain\.py$/i.test(url.pathname)
+      && (
+        targetDocument.querySelector(ITEM_SELECTOR) !== null
+        || normalizeText(targetDocument.title).startsWith("バスケットの内容")
+      );
   }
 
   public getCartUrl(): string {
