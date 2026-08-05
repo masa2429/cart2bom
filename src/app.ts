@@ -264,7 +264,7 @@ export function startCart2BOM(): void {
         showMessage(
           document,
           "バスケットへの自動追加を中断しました",
-          "モノタロウがバスケット画面へ移動しませんでした。画面のエラー内容を確認してください。",
+          `${adapter.name}がバスケット画面へ移動しませんでした。画面のエラー内容を確認してください。`,
         );
         return;
       }

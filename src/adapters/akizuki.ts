@@ -103,6 +103,7 @@ export class AkizukiAdapter implements StoreAdapter {
   public readonly listNamePrefix = "秋月カート";
   public readonly quickOrderName = "秋月一括注文";
   public readonly quickOrderCodeRequirement = "通販コードは6桁の数字である必要があります。";
+  public readonly quickOrderCapacity = 30;
 
   public constructor(private readonly now: () => Date = () => new Date()) {}
 
@@ -207,6 +208,47 @@ export class AkizukiAdapter implements StoreAdapter {
   }
 
   public getQuickOrderUrl(): string {
-    return "https://akizukidenshi.com/catalog/quickorder/blanketorder.aspx";
+    return "https://akizukidenshi.com/catalog/quickorder/quickorder.aspx";
+  }
+
+  public isQuickOrderPage(url: URL, _document: Document): boolean {
+    return this.matches(url)
+      && url.pathname.toLowerCase() === "/catalog/quickorder/quickorder.aspx";
+  }
+
+  /** Posts one batch through Akizuki's native quick-order form. */
+  public submitQuickOrder(targetDocument: Document, text: string): number {
+    const rows = text.split(/\r?\n/).filter((line) => line.trim()).map((line) => line.split("\t"));
+    if (rows.length > this.quickOrderCapacity) {
+      throw new Error(`秋月の一括注文へ送信できる商品は${this.quickOrderCapacity}件までです。`);
+    }
+    const sourceForm = targetDocument.querySelector<HTMLFormElement>("form#quickorder_form");
+    const token = sourceForm?.querySelector<HTMLInputElement>('input[name="crsirefo_hidden"]')?.value;
+    if (!sourceForm || !token) {
+      throw new Error("秋月の一括注文フォームを確認できませんでした。");
+    }
+
+    const form = targetDocument.createElement("form");
+    form.method = "GET";
+    form.action = sourceForm.action;
+    form.hidden = true;
+    const appendField = (name: string, value: string): void => {
+      const input = targetDocument.createElement("input");
+      input.type = "hidden";
+      input.name = name;
+      input.value = value;
+      form.append(input);
+    };
+    appendField("crsirefo_hidden", token);
+    for (let index = 0; index < this.quickOrderCapacity; index += 1) {
+      const [code = "", quantity = ""] = rows[index] ?? [];
+      appendField("goods", code);
+      appendField("qty", quantity);
+    }
+    targetDocument.body.append(form);
+    const nativeSubmit = targetDocument.defaultView?.HTMLFormElement.prototype.submit;
+    if (!nativeSubmit) throw new Error("秋月の一括注文フォームを送信できませんでした。");
+    nativeSubmit.call(form);
+    return rows.length;
   }
 }

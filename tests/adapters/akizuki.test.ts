@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AkizukiAdapter, extractAkizukiOrderCode, parseYen } from "../../src/adapters/akizuki";
 
 const fixture = readFileSync(resolve("tests/fixtures/akizuki-cart.html"), "utf8");
@@ -79,5 +79,35 @@ describe("AkizukiAdapter", () => {
       warnings: [],
       detectedCount: 0,
     });
+  });
+
+  it("一括注文を秋月標準フォームから買い物かごへ送信する", () => {
+    document.body.innerHTML = `
+      <form id="quickorder_form" action="/catalog/cart/cart.aspx" method="GET">
+        <input name="crsirefo_hidden" value="test-token">
+      </form>`;
+    const submit = vi.spyOn(HTMLFormElement.prototype, "submit").mockImplementation(function (this: HTMLFormElement) {
+      const data = new FormData(this);
+      expect(new URL(this.action).pathname).toBe("/catalog/cart/cart.aspx");
+      expect(this.method).toBe("get");
+      expect(data.get("crsirefo_hidden")).toBe("test-token");
+      expect(data.getAll("goods").slice(0, 3)).toEqual(["105148", "131939", ""]);
+      expect(data.getAll("qty").slice(0, 3)).toEqual(["2", "3", ""]);
+      expect(data.getAll("goods")).toHaveLength(30);
+    });
+
+    const adapter = new AkizukiAdapter();
+    expect(adapter.isQuickOrderPage(
+      new URL("https://akizukidenshi.com/catalog/quickorder/quickorder.aspx"),
+      document,
+    )).toBe(true);
+    expect(adapter.submitQuickOrder(document, "105148\t2\n131939\t3")).toBe(2);
+    expect(submit).toHaveBeenCalledOnce();
+  });
+
+  it("トークンのない一括注文画面では送信しない", () => {
+    document.body.innerHTML = '<form id="quickorder_form" action="/catalog/cart/cart.aspx"></form>';
+    expect(() => new AkizukiAdapter().submitQuickOrder(document, "105148\t2"))
+      .toThrow("一括注文フォームを確認できませんでした");
   });
 });
