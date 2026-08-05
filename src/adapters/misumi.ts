@@ -149,14 +149,11 @@ export class MisumiAdapter implements StoreAdapter {
       'button[data-testid="next-button"]:not([disabled])',
     );
     next.click();
-    const mappingNext = await this.waitForElement<HTMLButtonElement>(
-      targetDocument,
-      'button[data-testid="mapping-item-modal-next-button"]',
-    );
-    mappingNext.click();
+    // MISUMI renders this button while the pasted rows are still being processed.
+    // Wait until processing finishes and the button is enabled before advancing.
     const progressNext = await this.waitForElement<HTMLButtonElement>(
       targetDocument,
-      'button[data-testid="progress-modal-next-input"]',
+      'button[data-testid="progress-modal-next-input"]:not([disabled])',
       15_000,
     );
     progressNext.click();

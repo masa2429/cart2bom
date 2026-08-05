@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   MisumiAdapter,
   normalizeMisumiPartNumber,
@@ -102,6 +102,42 @@ describe("MisumiAdapter", () => {
 
     await expect(new MisumiAdapter(undefined, 30).submitQuickOrder(document, "CB3-10\t4"))
       .rejects.toThrow("画面操作が時間内に完了しませんでした");
+  });
+
+  it("一括入力の処理完了を待ってカートへ追加する", async () => {
+    document.body.innerHTML = `
+      <textarea data-testid="excel-copy-input"></textarea>
+      <button data-testid="next-button" disabled>次へ</button>
+    `;
+    const textarea = document.querySelector<HTMLTextAreaElement>("textarea");
+    const next = document.querySelector<HTMLButtonElement>('[data-testid="next-button"]');
+    textarea?.addEventListener("input", () => next?.removeAttribute("disabled"));
+    next?.addEventListener("click", () => {
+      const progressNext = document.createElement("button");
+      progressNext.dataset.testid = "progress-modal-next-input";
+      progressNext.disabled = true;
+      progressNext.textContent = "次へ";
+      progressNext.addEventListener("click", () => {
+        const addToCart = document.createElement("button");
+        addToCart.dataset.testid = "add-to-cart-button";
+        addToCart.addEventListener("click", () => {
+          const cartLink = document.createElement("a");
+          cartLink.href = "/order/cart";
+          document.body.append(cartLink);
+        });
+        document.body.append(addToCart);
+      });
+      document.body.append(progressNext);
+      window.setTimeout(() => progressNext.removeAttribute("disabled"), 10);
+    });
+
+    const navigationWarning = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    await expect(new MisumiAdapter(undefined, 500).submitQuickOrder(
+      document,
+      "DR1-2000在庫品\t1\t小原歯車工業",
+    )).resolves.toBe(1);
+    navigationWarning.mockRestore();
+    expect(textarea?.value).toBe("DR1-2000\t1\t小原歯車工業");
   });
 
   it("空のカートを処理する", () => {
