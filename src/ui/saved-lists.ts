@@ -5,6 +5,7 @@ import { createProductImage } from "./product-image";
 
 export interface SavedListActions {
   confirmBeforeDelete: boolean;
+  quickOrderAvailable?: boolean;
   onOpen(list: SavedList): void;
   onDuplicate(list: SavedList): Promise<void>;
   onRename(list: SavedList, name: string): Promise<void>;
@@ -90,7 +91,8 @@ export function openSavedLists(
       catch (error) { status.textContent = error instanceof Error ? error.message : "出力に失敗しました。"; }
     });
     buttons.prepend(open, defaultExport, rename, duplicate);
-    buttons.append(quickCopy, quickOpen, remove);
+    if (actions.quickOrderAvailable) buttons.append(quickCopy, quickOpen);
+    buttons.append(remove);
     card.append(title, meta);
     if (images.childElementCount > 0) card.append(images);
     card.append(buttons);

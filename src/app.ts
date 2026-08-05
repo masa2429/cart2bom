@@ -19,17 +19,8 @@ import { openSavedLists } from "./ui/saved-lists";
 import { openSettings } from "./ui/settings";
 import { showToast } from "./ui/toast";
 
-const SUPPORTED_HOSTS = new Set([
-  "akizukidenshi.com",
-  "www.akizukidenshi.com",
-]);
-
 /** Starts Cart2BOM only on a supported store domain. */
 export function startCart2BOM(): void {
-  if (!SUPPORTED_HOSTS.has(window.location.hostname)) {
-    return;
-  }
-
   if (__CART2BOM_DEVELOPMENT__) {
     console.debug(`[Cart2BOM] version ${__CART2BOM_VERSION__}`);
   }
@@ -56,6 +47,7 @@ export function startCart2BOM(): void {
     openCartEditor(document, {
       items: list.items,
       existingList: list,
+      defaultListNamePrefix: adapter.listNamePrefix,
       onSave: async (value) => {
         const updated: SavedList = { ...list, ...value };
         try {
@@ -75,6 +67,7 @@ export function startCart2BOM(): void {
       const lists = await listService.getAll();
       openSavedLists(document, lists, {
         confirmBeforeDelete: settings.confirmBeforeDelete,
+        quickOrderAvailable: typeof adapter.createQuickOrderText === "function",
         onOpen: openExisting,
         onDuplicate: async (list) => {
           await listService.duplicate(list.id);
@@ -180,7 +173,12 @@ export function startCart2BOM(): void {
         if (result.warnings.length > 0) {
           showToast(document, `${result.items.length}商品を取得しました。警告の詳細を確認画面に表示しました。`);
         }
-        openCartEditor(document, { items: result.items, warnings: result.warnings, onSave: saveNewList });
+        openCartEditor(document, {
+          items: result.items,
+          warnings: result.warnings,
+          defaultListNamePrefix: adapter.listNamePrefix,
+          onSave: saveNewList,
+        });
       },
       onSavedLists: () => void showLists(),
       onImport: () => openImportDialog(document, async (list) => {

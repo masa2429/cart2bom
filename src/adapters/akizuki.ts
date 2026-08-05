@@ -100,6 +100,7 @@ function warning(code: string, message: string, itemHint?: string): ExtractionWa
 export class AkizukiAdapter implements StoreAdapter {
   public readonly id = "akizuki";
   public readonly name = "秋月電子通商";
+  public readonly listNamePrefix = "秋月カート";
 
   public constructor(private readonly now: () => Date = () => new Date()) {}
 

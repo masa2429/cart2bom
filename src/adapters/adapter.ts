@@ -15,6 +15,7 @@ export interface CartExtractionResult {
 export interface StoreAdapter {
   readonly id: string;
   readonly name: string;
+  readonly listNamePrefix: string;
   matches(url: URL): boolean;
   isCartPage(url: URL, document: Document): boolean;
   getCartUrl(): string | null;

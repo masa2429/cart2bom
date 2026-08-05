@@ -18,4 +18,14 @@ describe("createProductImage", () => {
   it("商品と異なるホストの画像を拒否する", () => {
     expect(createProductImage(document, { ...item, imageUrl: "https://tracker.example/pixel.gif" })).toBeNull();
   });
+
+  it("モノタロウの公式画像ホストを許可する", () => {
+    const image = createProductImage(document, {
+      ...item,
+      storeId: "monotaro",
+      productUrl: "https://www.monotaro.com/p/4781/7527/",
+      imageUrl: "https://jp.images-monotaro.com/Monotaro3/pi/middle/mono47817527.jpg",
+    });
+    expect(image?.src).toContain("jp.images-monotaro.com");
+  });
 });

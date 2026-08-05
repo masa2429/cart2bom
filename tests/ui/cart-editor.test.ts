@@ -75,4 +75,15 @@ describe("openCartEditor", () => {
     expect(document.querySelector(".cart2bom-warning-details li")?.textContent)
       .toBe("999999: 数量を取得できませんでした。");
   });
+
+  it("店舗名を含む既定リスト名を表示する", () => {
+    openCartEditor(document, {
+      items: [item],
+      defaultListNamePrefix: "モノタロウカート",
+      onSave: vi.fn(async () => undefined),
+    });
+
+    expect(document.querySelector<HTMLInputElement>('input[aria-label="リスト名"]')?.value)
+      .toMatch(/^モノタロウカート /);
+  });
 });

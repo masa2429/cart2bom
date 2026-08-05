@@ -4,7 +4,12 @@ function comparableHost(value: string): string {
   return value.toLowerCase().replace(/^www\./, "");
 }
 
-/** Creates an image only when it is HTTPS and hosted with the referenced product. */
+function isAllowedHost(item: CartItem, imageHost: string, productHost: string): boolean {
+  if (comparableHost(imageHost) === comparableHost(productHost)) return true;
+  return item.storeId === "monotaro" && imageHost.toLowerCase() === "jp.images-monotaro.com";
+}
+
+/** Creates an image only when it is HTTPS and hosted by the store or its known image host. */
 export function createProductImage(
   targetDocument: Document,
   item: CartItem,
@@ -15,7 +20,7 @@ export function createProductImage(
     const productUrl = new URL(item.productUrl);
     if (
       imageUrl.protocol !== "https:" ||
-      comparableHost(imageUrl.hostname) !== comparableHost(productUrl.hostname)
+      !isAllowedHost(item, imageUrl.hostname, productUrl.hostname)
     ) return null;
     const image = targetDocument.createElement("img");
     image.src = imageUrl.href;

@@ -55,4 +55,23 @@ describe("openSavedLists", () => {
     expect(image?.src).toBe("https://example.test/item.jpg");
     expect(image?.alt).toBe("画像付き商品");
   });
+
+  it("非対応店舗では秋月一括注文ボタンを表示しない", () => {
+    const actions: SavedListActions = {
+      confirmBeforeDelete: true,
+      quickOrderAvailable: false,
+      onOpen: vi.fn(),
+      onDuplicate: vi.fn(async () => undefined),
+      onRename: vi.fn(async () => undefined),
+      onDelete: vi.fn(async () => undefined),
+      onExport: vi.fn(),
+      onCopyQuickOrder: vi.fn(async () => undefined),
+      onOpenQuickOrder: vi.fn(async () => undefined),
+      onDefaultExport: vi.fn(),
+    };
+
+    openSavedLists(document, [list], actions);
+
+    expect(document.body.textContent).not.toContain("秋月一括注文");
+  });
 });

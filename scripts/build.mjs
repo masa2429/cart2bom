@@ -20,6 +20,8 @@ const userScriptHeader = `// ==UserScript==
 // @supportURL   https://github.com/masa2429/cart2bom/issues
 // @match        https://akizukidenshi.com/*
 // @match        https://www.akizukidenshi.com/*
+// @match        https://monotaro.com/*
+// @match        https://www.monotaro.com/*
 // @run-at       document-idle
 // @grant        GM.getValue
 // @grant        GM.setValue

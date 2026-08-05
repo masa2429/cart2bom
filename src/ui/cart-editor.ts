@@ -16,17 +16,18 @@ export interface CartEditorOptions {
   items: CartItem[];
   warnings?: ExtractionWarning[];
   existingList?: SavedList;
+  defaultListNamePrefix?: string;
   onSave(value: CartEditorValue): Promise<void>;
 }
 
-function defaultListName(now = new Date()): string {
+function defaultListName(prefix: string, now = new Date()): string {
   const parts = new Intl.DateTimeFormat("ja-JP", {
     year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit",
     hour12: false,
   }).formatToParts(now);
   const value = (type: Intl.DateTimeFormatPartTypes): string =>
     parts.find((part) => part.type === type)?.value ?? "00";
-  return `秋月カート ${value("year")}-${value("month")}-${value("day")} ${value("hour")}:${value("minute")}`;
+  return `${prefix} ${value("year")}-${value("month")}-${value("day")} ${value("hour")}:${value("minute")}`;
 }
 
 function input(targetDocument: Document, value: string, ariaLabel: string): HTMLInputElement {
@@ -42,7 +43,11 @@ export function openCartEditor(targetDocument: Document, options: CartEditorOpti
 
   const form = targetDocument.createElement("div");
   form.className = "cart2bom-form";
-  const name = input(targetDocument, options.existingList?.name ?? defaultListName(), "リスト名");
+  const name = input(
+    targetDocument,
+    options.existingList?.name ?? defaultListName(options.defaultListNamePrefix ?? "カート"),
+    "リスト名",
+  );
   const description = input(targetDocument, options.existingList?.description ?? "", "説明");
   const tags = input(targetDocument, options.existingList?.tags.join(", ") ?? "", "タグ");
   for (const [labelText, element] of [["リスト名", name], ["説明", description], ["タグ（カンマ区切り）", tags]] as const) {
