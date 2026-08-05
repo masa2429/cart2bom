@@ -1,6 +1,6 @@
 {
   "name": "cart2bom",
-  "version": "0.4.2",
+  "version": "0.4.3",
   "private": true,
   "description": "複数通販サイトのカートを保存・共有可能な部品リストへ変換するUserScript",
   "author": "morita_masato",
