@@ -682,6 +682,7 @@ export function exportCsv(list: SavedList): string;
 export function exportTsv(list: SavedList): string;
 export function exportJson(list: SavedList): string;
 export function exportMarkdown(list: SavedList): string;
+export function exportPlainText(list: SavedList): string;
 export function exportQuickOrder(
   list: SavedList,
   adapter: StoreAdapter
@@ -689,6 +690,14 @@ export function exportQuickOrder(
 ```
 
 ファイル保存処理と文字列生成処理は分離する．これにより単体テストしやすくする．
+
+### 17.1．共有URL
+
+保存リストを圧縮し，対応サイトのカートURLのフラグメント`#cart2bom=`へ埋め込む．専用の共有サーバーは使用しない．受信時は既存の保存リストスキーマで検証し，リスト名，商品数，店舗別件数，合計金額を確認してからインポートする．URLを開いただけで保存，カート追加，注文確定を行ってはならない．
+
+### 17.2．平文共有
+
+チャットやメールへ貼り付けられるよう，リスト名，店舗，商品名，通販コード・型番，メーカー，数量，販売単位，単価，小計，備考，商品URL，合計金額を読みやすい平文として生成し，利用者の明示操作でクリップボードへコピーする．
 
 ---
 

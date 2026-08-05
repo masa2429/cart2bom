@@ -47,6 +47,8 @@ describe("openSavedLists", () => {
       onRename: vi.fn(async () => undefined),
       onDelete: vi.fn(async () => undefined),
       onExport: vi.fn(),
+      onCopyPlainText: vi.fn(async () => undefined),
+      onCopyShareUrl: vi.fn(async () => undefined),
       onCopyQuickOrder: vi.fn(async () => undefined),
       onOpenQuickOrder: vi.fn(async () => undefined),
     };
@@ -68,6 +70,8 @@ describe("openSavedLists", () => {
       onRename: vi.fn(async () => undefined),
       onDelete: vi.fn(async () => undefined),
       onExport: vi.fn(),
+      onCopyPlainText: vi.fn(async () => undefined),
+      onCopyShareUrl: vi.fn(async () => undefined),
       onCopyQuickOrder: vi.fn(async () => undefined),
       onOpenQuickOrder: vi.fn(async () => undefined),
     };
@@ -87,6 +91,8 @@ describe("openSavedLists", () => {
       onRename: vi.fn(async () => undefined),
       onDelete: vi.fn(async () => undefined),
       onExport: vi.fn(),
+      onCopyPlainText: vi.fn(async () => undefined),
+      onCopyShareUrl: vi.fn(async () => undefined),
       onCopyQuickOrder: vi.fn(async () => undefined),
       onOpenQuickOrder: vi.fn(async () => undefined),
     };
@@ -107,6 +113,8 @@ describe("openSavedLists", () => {
       onRename: vi.fn(async () => undefined),
       onDelete: vi.fn(async () => undefined),
       onExport: vi.fn(),
+      onCopyPlainText: vi.fn(async () => undefined),
+      onCopyShareUrl: vi.fn(async () => undefined),
       onCopyQuickOrder: vi.fn(async () => undefined),
       onOpenQuickOrder: vi.fn(async () => undefined),
     });
@@ -116,6 +124,8 @@ describe("openSavedLists", () => {
 
   it("主要操作だけを直接表示し、残りをメニューへまとめる", () => {
     const onExport = vi.fn();
+    const onCopyPlainText = vi.fn(async () => undefined);
+    const onCopyShareUrl = vi.fn(async () => undefined);
     openSavedLists(document, [list], {
       confirmBeforeDelete: true,
       quickOrderAvailable: true,
@@ -125,6 +135,8 @@ describe("openSavedLists", () => {
       onRename: vi.fn(async () => undefined),
       onDelete: vi.fn(async () => undefined),
       onExport,
+      onCopyPlainText,
+      onCopyShareUrl,
       onCopyQuickOrder: vi.fn(async () => undefined),
       onOpenQuickOrder: vi.fn(async () => undefined),
     });
@@ -143,6 +155,16 @@ describe("openSavedLists", () => {
     )).find((button) => button.textContent === "CSV出力");
     csv?.click();
     expect(onExport).toHaveBeenCalledWith(list, "csv");
+    const share = Array.from(document.querySelectorAll<HTMLButtonElement>(
+      ".cart2bom-action-menu-panel .cart2bom-button",
+    )).find((button) => button.textContent === "共有URLをコピー");
+    const plain = Array.from(document.querySelectorAll<HTMLButtonElement>(
+      ".cart2bom-action-menu-panel .cart2bom-button",
+    )).find((button) => button.textContent === "平文をコピー");
+    share?.click();
+    plain?.click();
+    expect(onCopyShareUrl).toHaveBeenCalledWith(list);
+    expect(onCopyPlainText).toHaveBeenCalledWith(list);
   });
 
   it("現在の店舗の商品を含むリストだけへ絞り込む", () => {

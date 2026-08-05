@@ -13,6 +13,8 @@ export interface SavedListActions {
   onRename(list: SavedList, name: string): Promise<void>;
   onDelete(list: SavedList): Promise<void>;
   onExport(list: SavedList, format: "csv" | "tsv" | "json" | "markdown"): void;
+  onCopyPlainText(list: SavedList): Promise<void>;
+  onCopyShareUrl(list: SavedList): Promise<void>;
   onCopyQuickOrder(list: SavedList): Promise<void>;
   onOpenQuickOrder(list: SavedList): Promise<void>;
 }
@@ -105,6 +107,18 @@ export function openSavedLists(
       catch (error) { status.textContent = error instanceof Error ? error.message : "削除に失敗しました。"; }
     });
     const exportMenu = createActionMenu(targetDocument, "出力");
+    const shareUrl = createButton(targetDocument, "共有URLをコピー");
+    shareUrl.addEventListener("click", async () => {
+      try { await actions.onCopyShareUrl(list); }
+      catch (error) { status.textContent = error instanceof Error ? error.message : "共有URLをコピーできませんでした。"; }
+    });
+    appendMenuButton(exportMenu, shareUrl);
+    const plainText = createButton(targetDocument, "平文をコピー");
+    plainText.addEventListener("click", async () => {
+      try { await actions.onCopyPlainText(list); }
+      catch (error) { status.textContent = error instanceof Error ? error.message : "平文をコピーできませんでした。"; }
+    });
+    appendMenuButton(exportMenu, plainText);
     for (const [label, format] of [["CSV", "csv"], ["TSV", "tsv"], ["JSON", "json"], ["Markdown", "markdown"]] as const) {
       const exportButton = createButton(targetDocument, `${label}出力`);
       exportButton.addEventListener("click", () => actions.onExport(list, format));

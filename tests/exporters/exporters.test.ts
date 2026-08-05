@@ -7,6 +7,7 @@ import { parseSavedListJson } from "../../src/core/validation";
 import { exportCsv } from "../../src/exporters/csv";
 import { exportJson } from "../../src/exporters/json";
 import { exportMarkdown } from "../../src/exporters/markdown";
+import { exportPlainText } from "../../src/exporters/plain-text";
 import {
   exportQuickOrder,
   exportQuickOrderBatches,
@@ -51,6 +52,18 @@ describe("exporters", () => {
     expect(markdown).toContain("部品メーカー");
     expect(markdown).toContain("1袋100本入");
     expect(markdown).toContain("**合計 200円**");
+  });
+
+  it("チャットへ貼り付けやすい平文を出力する", () => {
+    const plain = exportPlainText(list);
+    expect(plain).toContain("【秋月電子通商】");
+    expect(plain).toContain("1. 抵抗, 1kΩ 高精度");
+    expect(plain).toContain('メーカー: 部品メーカー / メーカー型番: MPN"1');
+    expect(plain).toContain("数量: 2 / 販売単位: 1袋100本入");
+    expect(plain).toContain("単価: 100円 / 小計: 200円");
+    expect(plain).toContain("備考: A B C");
+    expect(plain).toContain("https://example.test/item");
+    expect(plain).toContain("合計 200円");
   });
 
   it("秋月一括注文で同じ通販コードの数量を合算する", () => {

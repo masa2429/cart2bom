@@ -2,6 +2,7 @@ import { findAdapter } from "./adapters/registry";
 import { DuplicateListNameError, StorageDataError } from "./core/errors";
 import { ListService } from "./core/list-service";
 import { DEFAULT_SETTINGS, type AppSettings, type SavedList } from "./core/models";
+import { createSharedListUrl, hasSharedListFragment, readSharedListUrl } from "./core/share-url";
 import {
   readPendingQuickOrder,
   removePendingQuickOrder,
@@ -12,6 +13,7 @@ import { exportCsv } from "./exporters/csv";
 import { copyText, downloadText, safeFileName } from "./exporters/download";
 import { exportJson } from "./exporters/json";
 import { exportMarkdown } from "./exporters/markdown";
+import { exportPlainText } from "./exporters/plain-text";
 import { exportQuickOrder, exportQuickOrderBatches } from "./exporters/quick-order";
 import { exportTsv } from "./exporters/tsv";
 import { GMStorageProvider } from "./storage/gm-storage";
@@ -22,6 +24,7 @@ import { openMainMenu } from "./ui/main-menu";
 import { createButton, openModal, showMessage } from "./ui/modal";
 import { filterSavedListsByStore, openSavedLists } from "./ui/saved-lists";
 import { openSettings } from "./ui/settings";
+import { openSharedListDialog } from "./ui/shared-list-dialog";
 import { showToast } from "./ui/toast";
 
 /** Starts Cart2BOM only on a supported store domain. */
@@ -46,6 +49,17 @@ export function startCart2BOM(): void {
       await listService.create(value, true);
     }
     showToast(document, "リストを保存しました。");
+  };
+
+  const importList = async (list: SavedList): Promise<void> => {
+    try {
+      await listService.importList(list);
+    } catch (error) {
+      if (!(error instanceof DuplicateListNameError)) throw error;
+      if (!window.confirm(`${error.message}\n上書きしますか？`)) throw new Error("インポートをキャンセルしました。");
+      await listService.importList(list, true);
+    }
+    showToast(document, "リストをインポートしました。");
   };
 
   const openExisting = (list: SavedList): void => {
@@ -99,6 +113,17 @@ export function startCart2BOM(): void {
           const output = exporters[format];
           downloadText(document, output.text, `${safeFileName(list.name)}.${output.extension}`, output.mime);
           showToast(document, `${output.extension.toUpperCase()}ファイルを保存しました。`);
+        },
+        onCopyPlainText: async (list) => {
+          await copyText(document, exportPlainText(list));
+          showToast(document, "平文をクリップボードへコピーしました。");
+        },
+        onCopyShareUrl: async (list) => {
+          const cartUrl = adapter.getCartUrl();
+          if (!cartUrl) throw new Error("共有URLの表示先が設定されていません。");
+          const url = await createSharedListUrl(list, cartUrl);
+          await copyText(document, url);
+          showToast(document, `共有URLをコピーしました（${url.length.toLocaleString("ja-JP")}文字）。`);
         },
         onCopyQuickOrder: async (list) => {
           await copyText(document, exportQuickOrder(list, adapter));
@@ -200,16 +225,7 @@ export function startCart2BOM(): void {
         });
       },
       onSavedLists: () => void showLists(),
-      onImport: () => openImportDialog(document, async (list) => {
-        try {
-          await listService.importList(list);
-        } catch (error) {
-          if (!(error instanceof DuplicateListNameError)) throw error;
-          if (!window.confirm(`${error.message}\n上書きしますか？`)) throw new Error("インポートをキャンセルしました。");
-          await listService.importList(list, true);
-        }
-        showToast(document, "リストをインポートしました。");
-      }),
+      onImport: () => openImportDialog(document, importList),
       onSettings: () => openSettings(document, settings, async (next) => {
         await settingsService.save(next);
         settings = next;
@@ -229,6 +245,21 @@ export function startCart2BOM(): void {
   });
 
   const currentUrl = new URL(window.location.href);
+  if (hasSharedListFragment(currentUrl)) {
+    void readSharedListUrl(currentUrl).then((list) => {
+      if (!list) return;
+      openSharedListDialog(document, list, async (sharedList) => {
+        await importList(sharedList);
+        window.history.replaceState(window.history.state, "", `${window.location.pathname}${window.location.search}`);
+      });
+    }).catch((error: unknown) => {
+      showMessage(
+        document,
+        "共有リストを読み込めませんでした",
+        error instanceof Error ? error.message : "共有URLが不正です。",
+      );
+    });
+  }
   if (adapter.submitQuickOrder) {
     void readPendingQuickOrder(storage, adapter.id).then(async (pending) => {
       if (!pending) return;

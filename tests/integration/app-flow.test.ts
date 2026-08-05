@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { CURRENT_SCHEMA_VERSION, STORAGE_KEYS, type SavedList } from "../../src/core/models";
+import { createSharedListUrl } from "../../src/core/share-url";
 import { startCart2BOM } from "../../src/app";
 
 const fixture = readFileSync(resolve("tests/fixtures/akizuki-cart.html"), "utf8");
@@ -32,6 +33,7 @@ function installMemoryGm(values: Map<string, unknown>): void {
 
 describe("Cart2BOM app flow", () => {
   beforeEach(() => {
+    window.history.replaceState(null, "", "/catalog/cart/cart.aspx");
     document.documentElement.innerHTML = fixture;
     vi.stubGlobal("__CART2BOM_VERSION__", "0.1.0-test");
     vi.stubGlobal("__CART2BOM_DEVELOPMENT__", false);
@@ -121,6 +123,38 @@ describe("Cart2BOM app flow", () => {
     await vi.waitFor(() => {
       expect(values.get(STORAGE_KEYS.lists)).toEqual([imported]);
       expect(document.body.textContent).toContain("リストをインポートしました。");
+    });
+  });
+
+  it("共有URLを確認後にGMストレージへインポートする", async () => {
+    const values = new Map<string, unknown>();
+    installMemoryGm(values);
+    const shared: SavedList = {
+      id: "shared-list",
+      schemaVersion: CURRENT_SCHEMA_VERSION,
+      name: "共有URL統合テスト",
+      description: "サークル共有",
+      tags: ["test"],
+      items: [{
+        id: "akizuki:105148", storeId: "akizuki", storeName: "秋月電子通商", orderCode: "105148",
+        manufacturerName: "テストメーカー", manufacturerPartNumber: "TEST-1", name: "共有商品",
+        salesUnit: "1個", quantity: 2, unitPrice: 100, subtotal: 200, currency: "JPY",
+        productUrl: "https://akizukidenshi.com/catalog/g/g105148/", imageUrl: null,
+        stockStatus: null, leadTime: null, note: "", capturedAt: "2026-08-05T00:00:00.000Z",
+      }],
+      createdAt: "2026-08-05T00:00:00.000Z", updatedAt: "2026-08-05T00:00:00.000Z",
+    };
+    const shareUrl = await createSharedListUrl(shared, window.location.href);
+    window.history.replaceState(null, "", shareUrl);
+
+    startCart2BOM();
+    await vi.waitFor(() => expect(document.body.textContent).toContain("共有URL統合テスト"));
+    expect(values.get(STORAGE_KEYS.lists)).toBeUndefined();
+    buttonByText("このリストを取り込む").click();
+
+    await vi.waitFor(() => {
+      expect(values.get(STORAGE_KEYS.lists)).toEqual([shared]);
+      expect(window.location.hash).toBe("");
     });
   });
 });
