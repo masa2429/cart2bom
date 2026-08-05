@@ -107,8 +107,8 @@ export class MonotaroAdapter implements StoreAdapter {
     return this.matches(url) && /^\/quick-order\/?$/i.test(url.pathname);
   }
 
-  /** Fills the ten visible code/quantity rows without submitting the form. */
-  public fillQuickOrder(targetDocument: Document, text: string): number {
+  /** Fills the ten visible rows sequentially and waits for each product lookup. */
+  public async fillQuickOrder(targetDocument: Document, text: string): Promise<number> {
     const rows = text.split(/\r?\n/).filter((line) => line.trim()).map((line) => line.split("\t"));
     if (rows.length > this.quickOrderCapacity) {
       throw new Error(`モノタロウのクイックオーダーへ入力できる商品は${this.quickOrderCapacity}件までです。`);
@@ -121,6 +121,12 @@ export class MonotaroAdapter implements StoreAdapter {
     ));
     if (codeInputs.length < rows.length || quantityInputs.length < rows.length) {
       throw new Error("モノタロウのクイックオーダー入力欄を確認できませんでした。");
+    }
+    if (
+      codeInputs.some((input) => input.value.trim())
+      || quantityInputs.some((input) => input.value.trim())
+    ) {
+      throw new Error("入力済みの行があります。空のクイックオーダー画面で実行してください。");
     }
 
     const inputPrototype = targetDocument.defaultView?.HTMLInputElement.prototype;
@@ -135,15 +141,38 @@ export class MonotaroAdapter implements StoreAdapter {
       input.dispatchEvent(new InputEvent("change", { bubbles: true }));
     };
 
-    codeInputs.forEach((input) => setValue(input, ""));
-    quantityInputs.forEach((input) => setValue(input, ""));
-    rows.forEach(([code = "", quantity = ""], index) => {
+    const wait = (milliseconds: number): Promise<void> => new Promise((resolve) => {
+      const schedule = targetDocument.defaultView?.setTimeout.bind(targetDocument.defaultView) ?? setTimeout;
+      schedule(resolve, milliseconds);
+    });
+    const waitForProduct = async (input: HTMLInputElement): Promise<void> => {
+      const productCell = input.closest("tr")?.querySelector("td:last-child");
+      for (let attempt = 0; attempt < 30; attempt += 1) {
+        if (normalizeText(productCell?.textContent)) return;
+        await wait(100);
+      }
+    };
+
+    for (let index = 0; index < rows.length; index += 1) {
+      const [code = "", quantity = ""] = rows[index] ?? [];
       const codeInput = codeInputs[index];
       const quantityInput = quantityInputs[index];
-      if (!codeInput || !quantityInput) return;
+      if (!codeInput || !quantityInput) continue;
+      codeInput.focus();
       setValue(codeInput, code);
+      codeInput.blur();
+      await waitForProduct(codeInput);
+      if (codeInput.value !== code) {
+        throw new Error(`${code}の注文コードが画面から消去されました。ページを再読み込みして再試行してください。`);
+      }
+      quantityInput.focus();
       setValue(quantityInput, quantity);
-    });
+      quantityInput.blur();
+      await wait(50);
+      if (quantityInput.value !== quantity) {
+        throw new Error(`${code}の数量を入力できませんでした。`);
+      }
+    }
     return rows.length;
   }
 

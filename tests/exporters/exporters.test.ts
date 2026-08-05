@@ -6,7 +6,11 @@ import { parseSavedListJson } from "../../src/core/validation";
 import { exportCsv } from "../../src/exporters/csv";
 import { exportJson } from "../../src/exporters/json";
 import { exportMarkdown } from "../../src/exporters/markdown";
-import { exportQuickOrder, QuickOrderValidationError } from "../../src/exporters/quick-order";
+import {
+  exportQuickOrder,
+  exportQuickOrderBatches,
+  QuickOrderValidationError,
+} from "../../src/exporters/quick-order";
 import { exportTsv } from "../../src/exporters/tsv";
 
 const item: CartItem = {
@@ -72,7 +76,7 @@ describe("exporters", () => {
       .toBe("47817527\t2");
   });
 
-  it("モノタロウの10商品制限を超えるリストを拒否する", () => {
+  it("モノタロウの11商品を10件以下のバッチへ分割する", () => {
     const items = Array.from({ length: 11 }, (_, index) => ({
       ...item,
       id: `monotaro:${String(10000000 + index)}`,
@@ -80,7 +84,9 @@ describe("exporters", () => {
       storeName: "モノタロウ",
       orderCode: String(10000000 + index),
     }));
-    expect(() => exportQuickOrder({ ...list, items }, new MonotaroAdapter()))
-      .toThrow(QuickOrderValidationError);
+    const batches = exportQuickOrderBatches({ ...list, items }, new MonotaroAdapter());
+    expect(batches).toHaveLength(2);
+    expect(batches[0]?.split("\n")).toHaveLength(10);
+    expect(batches[1]).toBe("10000010\t2");
   });
 });

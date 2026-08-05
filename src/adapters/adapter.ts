@@ -27,5 +27,5 @@ export interface StoreAdapter {
   createQuickOrderText?(items: CartItem[]): string;
   getQuickOrderUrl?(): string | null;
   isQuickOrderPage?(url: URL, document: Document): boolean;
-  fillQuickOrder?(document: Document, text: string): number;
+  fillQuickOrder?(document: Document, text: string): number | Promise<number>;
 }

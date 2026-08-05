@@ -1,6 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { CURRENT_SCHEMA_VERSION, type SavedList } from "../../src/core/models";
-import { openSavedLists, type SavedListActions } from "../../src/ui/saved-lists";
+import {
+  filterSavedListsByStore,
+  openSavedLists,
+  type SavedListActions,
+} from "../../src/ui/saved-lists";
 
 const list: SavedList = {
   id: "list-1",
@@ -95,5 +99,19 @@ describe("openSavedLists", () => {
 
     expect(document.body.textContent).toContain("モノタロウクイックオーダーをコピー");
     expect(document.body.textContent).toContain("モノタロウクイックオーダー画面へ入力");
+  });
+
+  it("現在の店舗の商品を含むリストだけへ絞り込む", () => {
+    const monotaroList: SavedList = {
+      ...list,
+      id: "monotaro-list",
+      name: "モノタロウリスト",
+      items: [{ ...list.items[0]!, id: "monotaro:47817527", storeId: "monotaro" }],
+    };
+
+    expect(filterSavedListsByStore([list, monotaroList], "monotaro"))
+      .toEqual([monotaroList]);
+    expect(filterSavedListsByStore([list, monotaroList], "akizuki"))
+      .toEqual([list]);
   });
 });

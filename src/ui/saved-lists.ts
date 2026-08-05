@@ -18,6 +18,10 @@ export interface SavedListActions {
   onDefaultExport(list: SavedList): Promise<void> | void;
 }
 
+export function filterSavedListsByStore(lists: SavedList[], storeId: string): SavedList[] {
+  return lists.filter((list) => list.items.some((item) => item.storeId === storeId));
+}
+
 export function openSavedLists(
   targetDocument: Document,
   lists: SavedList[],
@@ -28,7 +32,7 @@ export function openSavedLists(
   status.className = "cart2bom-error";
   if (lists.length === 0) {
     const empty = targetDocument.createElement("p");
-    empty.textContent = "保存済みリストはありません。";
+    empty.textContent = "この店舗の商品を含む保存済みリストはありません。";
     modal.content.append(empty);
     return;
   }

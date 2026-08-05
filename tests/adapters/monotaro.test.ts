@@ -78,12 +78,14 @@ describe("MonotaroAdapter", () => {
     });
   });
 
-  it("クイックオーダーの注文コードと数量を入力し、送信しない", () => {
+  it("クイックオーダーの注文コードと数量を順番に入力し、送信しない", async () => {
     document.body.innerHTML = `
       <form>
-        <input aria-label="注文コード" name="q0"><input aria-label="数量" name="p0">
-        <input aria-label="注文コード" name="q1"><input aria-label="数量" name="p1">
-        <input aria-label="注文コード" name="q2" value="99999999"><input aria-label="数量" name="p2" value="99">
+        <table><tbody>
+          <tr><td></td><td><input aria-label="注文コード" name="q0"></td><td><input aria-label="数量" name="p0"></td><td>商品1</td></tr>
+          <tr><td></td><td><input aria-label="注文コード" name="q1"></td><td><input aria-label="数量" name="p1"></td><td>商品2</td></tr>
+          <tr><td></td><td><input aria-label="注文コード" name="q2"></td><td><input aria-label="数量" name="p2"></td><td></td></tr>
+        </tbody></table>
         <button type="submit">バスケットに入れる</button>
       </form>`;
     const form = document.querySelector("form");
@@ -91,16 +93,23 @@ describe("MonotaroAdapter", () => {
     const submitted = { value: false };
     form?.addEventListener("submit", (event) => { event.preventDefault(); submitted.value = true; });
 
-    const count = new MonotaroAdapter().fillQuickOrder(document, "47817527\t2\n42107457\t10");
+    const count = await new MonotaroAdapter().fillQuickOrder(document, "47817527\t2\n42107457\t10");
 
     expect(count).toBe(2);
     expect(document.querySelector<HTMLInputElement>('input[name="q0"]')?.value).toBe("47817527");
     expect(document.querySelector<HTMLInputElement>('input[name="p0"]')?.value).toBe("2");
     expect(document.querySelector<HTMLInputElement>('input[name="q1"]')?.value).toBe("42107457");
     expect(document.querySelector<HTMLInputElement>('input[name="p1"]')?.value).toBe("10");
-    expect(document.querySelector<HTMLInputElement>('input[name="q2"]')?.value).toBe("");
-    expect(document.querySelector<HTMLInputElement>('input[name="p2"]')?.value).toBe("");
     expect(submitted.value).toBe(false);
     expect(submit).not.toBeNull();
+  });
+
+  it("入力済みのクイックオーダー画面を上書きしない", async () => {
+    document.body.innerHTML = `
+      <input aria-label="注文コード" name="q0" value="47817527">
+      <input aria-label="数量" name="p0" value="1">`;
+
+    await expect(new MonotaroAdapter().fillQuickOrder(document, "42107457\t10"))
+      .rejects.toThrow("入力済みの行があります");
   });
 });

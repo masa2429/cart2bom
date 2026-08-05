@@ -8,7 +8,7 @@ import { exportCsv } from "./exporters/csv";
 import { copyText, downloadText, safeFileName } from "./exporters/download";
 import { exportJson } from "./exporters/json";
 import { exportMarkdown } from "./exporters/markdown";
-import { exportQuickOrder } from "./exporters/quick-order";
+import { exportQuickOrder, exportQuickOrderBatches } from "./exporters/quick-order";
 import { exportTsv } from "./exporters/tsv";
 import { GMStorageProvider } from "./storage/gm-storage";
 import { openCartEditor, type CartEditorValue } from "./ui/cart-editor";
@@ -16,7 +16,7 @@ import { mountFloatingButton } from "./ui/floating-button";
 import { openImportDialog } from "./ui/import-dialog";
 import { openMainMenu } from "./ui/main-menu";
 import { createButton, openModal, showMessage } from "./ui/modal";
-import { openSavedLists } from "./ui/saved-lists";
+import { filterSavedListsByStore, openSavedLists } from "./ui/saved-lists";
 import { openSettings } from "./ui/settings";
 import { showToast } from "./ui/toast";
 
@@ -65,7 +65,7 @@ export function startCart2BOM(): void {
 
   const showLists = async (): Promise<void> => {
     try {
-      const lists = await listService.getAll();
+      const lists = filterSavedListsByStore(await listService.getAll(), adapter.id);
       openSavedLists(document, lists, {
         confirmBeforeDelete: settings.confirmBeforeDelete,
         quickOrderAvailable: typeof adapter.createQuickOrderText === "function",
@@ -101,7 +101,22 @@ export function startCart2BOM(): void {
           showToast(document, "クリップボードへコピーしました。");
         },
         onOpenQuickOrder: async (list) => {
-          const text = exportQuickOrder(list, adapter);
+          const batches = exportQuickOrderBatches(list, adapter);
+          let batchIndex = 0;
+          if (batches.length > 1) {
+            const selected = window.prompt(
+              `このリストは${batches.length}回に分けて入力します。入力する回を1～${batches.length}で指定してください。`,
+              "1",
+            );
+            if (selected === null) return;
+            const parsed = Number(selected);
+            if (!Number.isInteger(parsed) || parsed < 1 || parsed > batches.length) {
+              throw new Error(`入力する回は1～${batches.length}の整数で指定してください。`);
+            }
+            batchIndex = parsed - 1;
+          }
+          const text = batches[batchIndex];
+          if (!text) throw new Error("クイックオーダーへ入力する商品がありません。");
           await copyText(document, text);
           const quickOrderUrl = adapter.getQuickOrderUrl?.();
           if (!quickOrderUrl) throw new Error("一括注文ページが設定されていません。");
@@ -230,7 +245,7 @@ export function startCart2BOM(): void {
     void consumePendingQuickOrder(storage, adapter.id).then(async (pending) => {
       if (!pending) return;
       try {
-        const count = adapter.fillQuickOrder?.(document, pending.text) ?? 0;
+        const count = await adapter.fillQuickOrder?.(document, pending.text) ?? 0;
         showToast(document, `${count}商品をクイックオーダーへ入力しました。内容を確認してください。`);
       } catch (error) {
         await savePendingQuickOrder(storage, pending);

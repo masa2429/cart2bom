@@ -10,6 +10,10 @@ export class QuickOrderValidationError extends Error {
 }
 
 export function exportQuickOrder(list: SavedList, adapter: StoreAdapter): string {
+  return exportQuickOrderBatches(list, adapter).join("\n");
+}
+
+export function exportQuickOrderBatches(list: SavedList, adapter: StoreAdapter): string[] {
   if (!adapter.createQuickOrderText) throw new QuickOrderValidationError(["この店舗は一括注文形式に対応していません。"]);
   const quantities = new Map<string, number>();
   const representative = new Map<string, SavedList["items"][number]>();
@@ -28,10 +32,12 @@ export function exportQuickOrder(list: SavedList, adapter: StoreAdapter): string
     representative.set(item.orderCode, item);
   }
   if (quantities.size === 0) issues.push("一括注文へ出力できる商品がありません。");
-  if (adapter.quickOrderCapacity && quantities.size > adapter.quickOrderCapacity) {
-    issues.push(`${adapter.quickOrderName ?? "クイックオーダー"}へ一度に出力できる商品は${adapter.quickOrderCapacity}件までです。`);
-  }
   if (issues.length > 0) throw new QuickOrderValidationError(issues);
   const items = Array.from(quantities, ([code, quantity]) => ({ ...representative.get(code)!, quantity }));
-  return adapter.createQuickOrderText(items);
+  const capacity = adapter.quickOrderCapacity ?? items.length;
+  const batches: string[] = [];
+  for (let index = 0; index < items.length; index += capacity) {
+    batches.push(adapter.createQuickOrderText(items.slice(index, index + capacity)));
+  }
+  return batches;
 }
