@@ -1,9 +1,120 @@
-import type { SavedList } from "./models";
-import { parseSavedListJson } from "./validation";
+import { CURRENT_SCHEMA_VERSION, type CartItem, type SavedList } from "./models";
+import { validateSavedList } from "./validation";
 
 export const SHARED_LIST_FRAGMENT_PREFIX = "#cart2bom=";
+export const CART2BOM_SHARE_VIEWER_URL = "https://masa2429.github.io/cart2bom/share/";
 const MAX_ENCODED_LENGTH = 100_000;
 const MAX_DECODED_LENGTH = 1_000_000;
+const SHARE_PAYLOAD_VERSION = 1;
+
+type SharedItemTuple = [
+  storeId: string,
+  storeName: string,
+  orderCode: string,
+  manufacturerName: string | null,
+  manufacturerPartNumber: string | null,
+  name: string,
+  salesUnit: string | null,
+  quantity: number,
+  unitPrice: number | null,
+  subtotal: number | null,
+  productUrl: string,
+  imageUrl: string | null,
+  stockStatus: string | null,
+  leadTime: string | null,
+  note: string,
+];
+
+interface SharedListPayload {
+  v: number;
+  n: string;
+  d: string;
+  t: string[];
+  i: SharedItemTuple[];
+}
+
+export interface ReadSharedListOptions {
+  now?: () => Date;
+  createId?: () => string;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function compactList(list: SavedList): SharedListPayload {
+  return {
+    v: SHARE_PAYLOAD_VERSION,
+    n: list.name,
+    d: list.description,
+    t: list.tags,
+    i: list.items.map((item) => [
+      item.storeId,
+      item.storeName,
+      item.orderCode,
+      item.manufacturerName,
+      item.manufacturerPartNumber,
+      item.name,
+      item.salesUnit,
+      item.quantity,
+      item.unitPrice,
+      item.subtotal,
+      item.productUrl,
+      item.imageUrl,
+      item.stockStatus,
+      item.leadTime,
+      item.note,
+    ]),
+  };
+}
+
+function expandCompactList(
+  value: Record<string, unknown>,
+  now: () => Date,
+  createId: () => string,
+): SavedList {
+  if (value.v !== SHARE_PAYLOAD_VERSION || !Array.isArray(value.i)) {
+    throw new Error("未対応の共有リスト形式です。");
+  }
+  const timestamp = now().toISOString();
+  const items = value.i.map((entry, index): CartItem | unknown => {
+    if (!Array.isArray(entry)) return entry;
+    return {
+      id: `shared:${index}:${String(entry[0] ?? "item")}:${String(entry[2] ?? "code")}`,
+      storeId: entry[0],
+      storeName: entry[1],
+      orderCode: entry[2],
+      manufacturerName: entry[3],
+      manufacturerPartNumber: entry[4],
+      name: entry[5],
+      salesUnit: entry[6],
+      quantity: entry[7],
+      unitPrice: entry[8],
+      subtotal: entry[9],
+      currency: "JPY",
+      productUrl: entry[10],
+      imageUrl: entry[11],
+      stockStatus: entry[12],
+      leadTime: entry[13],
+      note: entry[14],
+      capturedAt: timestamp,
+    };
+  });
+  const result = validateSavedList({
+    id: createId(),
+    schemaVersion: CURRENT_SCHEMA_VERSION,
+    name: value.n,
+    description: value.d,
+    tags: value.t,
+    items,
+    createdAt: timestamp,
+    updatedAt: timestamp,
+  });
+  if (!result.ok) {
+    throw new Error(`共有リストが不正です。${result.issues.map((issue) => `${issue.path}: ${issue.message}`).join(" / ")}`);
+  }
+  return result.value;
+}
 
 function bytesToBase64Url(bytes: Uint8Array): string {
   let binary = "";
@@ -48,7 +159,7 @@ async function transformBytes(
 
 /** Creates a serverless URL whose fragment contains a validated SavedList payload. */
 export async function createSharedListUrl(list: SavedList, baseUrl: string): Promise<string> {
-  const source = new TextEncoder().encode(JSON.stringify(list));
+  const source = new TextEncoder().encode(JSON.stringify(compactList(list)));
   if (source.length > MAX_DECODED_LENGTH) throw new Error("共有リストのデータが大きすぎます。");
   const canCompress = typeof CompressionStream !== "undefined";
   const encoded = canCompress
@@ -64,7 +175,10 @@ export function hasSharedListFragment(url: URL): boolean {
 }
 
 /** Decodes and validates a shared list. Returns null when the URL is not a Cart2BOM share URL. */
-export async function readSharedListUrl(url: URL): Promise<SavedList | null> {
+export async function readSharedListUrl(
+  url: URL,
+  options: ReadSharedListOptions = {},
+): Promise<SavedList | null> {
   if (!hasSharedListFragment(url)) return null;
   const encoded = url.hash.slice(SHARED_LIST_FRAGMENT_PREFIX.length);
   if (encoded.length === 0 || encoded.length > MAX_ENCODED_LENGTH) {
@@ -89,9 +203,18 @@ export async function readSharedListUrl(url: URL): Promise<SavedList | null> {
   } catch {
     throw new Error("共有URLの文字コードが不正です。");
   }
-  const result = parseSavedListJson(text);
-  if (!result.ok) {
-    throw new Error(`共有リストが不正です。${result.issues.map((issue) => `${issue.path}: ${issue.message}`).join(" / ")}`);
+  let value: unknown;
+  try {
+    value = JSON.parse(text) as unknown;
+  } catch {
+    throw new Error("共有URLのJSONが不正です。");
   }
-  return result.value;
+  const legacy = validateSavedList(value);
+  if (legacy.ok) return legacy.value;
+  if (!isRecord(value)) throw new Error("共有リストが不正です。");
+  return expandCompactList(
+    value,
+    options.now ?? (() => new Date()),
+    options.createId ?? (() => crypto.randomUUID()),
+  );
 }

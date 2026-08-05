@@ -1,6 +1,8 @@
 declare const __CART2BOM_VERSION__: string;
 declare const __CART2BOM_DEVELOPMENT__: boolean;
 
+declare module "*.css";
+
 interface Cart2BOMGMApi {
   getValue<T>(key: string, defaultValue: T): Promise<T>;
   setValue<T>(key: string, value: T): Promise<void>;

@@ -153,7 +153,19 @@ describe("Cart2BOM app flow", () => {
     buttonByText("このリストを取り込む").click();
 
     await vi.waitFor(() => {
-      expect(values.get(STORAGE_KEYS.lists)).toEqual([shared]);
+      expect(values.get(STORAGE_KEYS.lists)).toEqual([
+        expect.objectContaining({
+          name: shared.name,
+          description: shared.description,
+          tags: shared.tags,
+          items: [expect.objectContaining({
+            storeId: "akizuki",
+            orderCode: "105148",
+            name: "共有商品",
+            quantity: 2,
+          })],
+        }),
+      ]);
       expect(window.location.hash).toBe("");
     });
   });

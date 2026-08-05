@@ -38,6 +38,31 @@ describe("共有URL", () => {
     const url = new URL(href);
     expect(url.origin).toBe("https://akizukidenshi.com");
     expect(hasSharedListFragment(url)).toBe(true);
+    const restored = await readSharedListUrl(url, {
+      now: () => new Date("2026-08-06T00:00:00.000Z"),
+      createId: () => "restored-list",
+    });
+    expect(restored).toMatchObject({
+      id: "restored-list",
+      name: list.name,
+      description: list.description,
+      tags: list.tags,
+      items: [expect.objectContaining({
+        storeId: "akizuki",
+        orderCode: "105148",
+        name: "共有商品",
+        quantity: 2,
+        capturedAt: "2026-08-06T00:00:00.000Z",
+      })],
+    });
+  });
+
+  it("0.5.4形式の保存リスト全体を埋め込んだURLも読み取る", async () => {
+    const bytes = new TextEncoder().encode(JSON.stringify(list));
+    let binary = "";
+    for (const byte of bytes) binary += String.fromCharCode(byte);
+    const payload = btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+    const url = new URL(`https://akizukidenshi.com/#cart2bom=j.${payload}`);
     expect(await readSharedListUrl(url)).toEqual(list);
   });
 

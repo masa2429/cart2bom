@@ -2,7 +2,12 @@ import { findAdapter } from "./adapters/registry";
 import { DuplicateListNameError, StorageDataError } from "./core/errors";
 import { ListService } from "./core/list-service";
 import { DEFAULT_SETTINGS, type AppSettings, type SavedList } from "./core/models";
-import { createSharedListUrl, hasSharedListFragment, readSharedListUrl } from "./core/share-url";
+import {
+  CART2BOM_SHARE_VIEWER_URL,
+  createSharedListUrl,
+  hasSharedListFragment,
+  readSharedListUrl,
+} from "./core/share-url";
 import {
   readPendingQuickOrder,
   removePendingQuickOrder,
@@ -119,9 +124,7 @@ export function startCart2BOM(): void {
           showToast(document, "平文をクリップボードへコピーしました。");
         },
         onCopyShareUrl: async (list) => {
-          const cartUrl = adapter.getCartUrl();
-          if (!cartUrl) throw new Error("共有URLの表示先が設定されていません。");
-          const url = await createSharedListUrl(list, cartUrl);
+          const url = await createSharedListUrl(list, CART2BOM_SHARE_VIEWER_URL);
           await copyText(document, url);
           showToast(document, `共有URLをコピーしました（${url.length.toLocaleString("ja-JP")}文字）。`);
         },

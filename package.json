@@ -14,6 +14,8 @@
   "scripts": {
     "build": "node scripts/build.mjs",
     "build:dev": "node scripts/build.mjs --development",
+    "build:pages": "node scripts/build-pages.mjs",
+    "build:all": "npm run build && npm run build:pages",
     "test": "vitest run",
     "test:watch": "vitest"
   },
