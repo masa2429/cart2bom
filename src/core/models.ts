@@ -50,4 +50,5 @@ export const STORAGE_KEYS = {
   settings: "cart2bom.settings",
   lists: "cart2bom.lists",
   migrations: "cart2bom.migrations",
+  pendingQuickOrder: "cart2bom.pendingQuickOrder",
 } as const;

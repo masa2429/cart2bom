@@ -77,4 +77,30 @@ describe("MonotaroAdapter", () => {
       detectedCount: 0,
     });
   });
+
+  it("クイックオーダーの注文コードと数量を入力し、送信しない", () => {
+    document.body.innerHTML = `
+      <form>
+        <input aria-label="注文コード" name="q0"><input aria-label="数量" name="p0">
+        <input aria-label="注文コード" name="q1"><input aria-label="数量" name="p1">
+        <input aria-label="注文コード" name="q2" value="99999999"><input aria-label="数量" name="p2" value="99">
+        <button type="submit">バスケットに入れる</button>
+      </form>`;
+    const form = document.querySelector("form");
+    const submit = document.querySelector("button");
+    const submitted = { value: false };
+    form?.addEventListener("submit", (event) => { event.preventDefault(); submitted.value = true; });
+
+    const count = new MonotaroAdapter().fillQuickOrder(document, "47817527\t2\n42107457\t10");
+
+    expect(count).toBe(2);
+    expect(document.querySelector<HTMLInputElement>('input[name="q0"]')?.value).toBe("47817527");
+    expect(document.querySelector<HTMLInputElement>('input[name="p0"]')?.value).toBe("2");
+    expect(document.querySelector<HTMLInputElement>('input[name="q1"]')?.value).toBe("42107457");
+    expect(document.querySelector<HTMLInputElement>('input[name="p1"]')?.value).toBe("10");
+    expect(document.querySelector<HTMLInputElement>('input[name="q2"]')?.value).toBe("");
+    expect(document.querySelector<HTMLInputElement>('input[name="p2"]')?.value).toBe("");
+    expect(submitted.value).toBe(false);
+    expect(submit).not.toBeNull();
+  });
 });

@@ -2,6 +2,7 @@ import { findAdapter } from "./adapters/registry";
 import { DuplicateListNameError, StorageDataError } from "./core/errors";
 import { ListService } from "./core/list-service";
 import { DEFAULT_SETTINGS, type AppSettings, type SavedList } from "./core/models";
+import { consumePendingQuickOrder, savePendingQuickOrder } from "./core/pending-quick-order";
 import { SettingsService } from "./core/settings-service";
 import { exportCsv } from "./exporters/csv";
 import { copyText, downloadText, safeFileName } from "./exporters/download";
@@ -68,6 +69,8 @@ export function startCart2BOM(): void {
       openSavedLists(document, lists, {
         confirmBeforeDelete: settings.confirmBeforeDelete,
         quickOrderAvailable: typeof adapter.createQuickOrderText === "function",
+        quickOrderLabel: adapter.quickOrderName ?? "クイックオーダー",
+        quickOrderAutoFill: typeof adapter.fillQuickOrder === "function",
         onOpen: openExisting,
         onDuplicate: async (list) => {
           await listService.duplicate(list.id);
@@ -98,11 +101,24 @@ export function startCart2BOM(): void {
           showToast(document, "クリップボードへコピーしました。");
         },
         onOpenQuickOrder: async (list) => {
-          await copyText(document, exportQuickOrder(list, adapter));
+          const text = exportQuickOrder(list, adapter);
+          await copyText(document, text);
           const quickOrderUrl = adapter.getQuickOrderUrl?.();
           if (!quickOrderUrl) throw new Error("一括注文ページが設定されていません。");
+          if (adapter.fillQuickOrder) {
+            await savePendingQuickOrder(storage, {
+              storeId: adapter.id,
+              text,
+              createdAt: new Date().toISOString(),
+            });
+          }
           window.open(quickOrderUrl, "_blank", "noopener");
-          showToast(document, "一括注文テキストをコピーしました。");
+          showToast(
+            document,
+            adapter.fillQuickOrder
+              ? "クイックオーダー画面を開き、入力内容を準備しました。"
+              : "一括注文テキストをコピーしました。",
+          );
         },
         onDefaultExport: async (list) => {
           if (settings.defaultExportFormat === "quickOrder") {
@@ -208,4 +224,24 @@ export function startCart2BOM(): void {
   }).catch((error: unknown) => {
     console.error("[Cart2BOM] settings", error);
   });
+
+  const currentUrl = new URL(window.location.href);
+  if (adapter.fillQuickOrder && adapter.isQuickOrderPage?.(currentUrl, document)) {
+    void consumePendingQuickOrder(storage, adapter.id).then(async (pending) => {
+      if (!pending) return;
+      try {
+        const count = adapter.fillQuickOrder?.(document, pending.text) ?? 0;
+        showToast(document, `${count}商品をクイックオーダーへ入力しました。内容を確認してください。`);
+      } catch (error) {
+        await savePendingQuickOrder(storage, pending);
+        showMessage(
+          document,
+          "クイックオーダーへ入力できませんでした",
+          error instanceof Error ? error.message : "入力欄を確認できませんでした。",
+        );
+      }
+    }).catch((error: unknown) => {
+      console.error("[Cart2BOM] quick order", error);
+    });
+  }
 }

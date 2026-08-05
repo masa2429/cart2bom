@@ -74,4 +74,26 @@ describe("openSavedLists", () => {
 
     expect(document.body.textContent).not.toContain("秋月一括注文");
   });
+
+  it("店舗別のクイックオーダー名をボタンへ表示する", () => {
+    const actions: SavedListActions = {
+      confirmBeforeDelete: true,
+      quickOrderAvailable: true,
+      quickOrderLabel: "モノタロウクイックオーダー",
+      quickOrderAutoFill: true,
+      onOpen: vi.fn(),
+      onDuplicate: vi.fn(async () => undefined),
+      onRename: vi.fn(async () => undefined),
+      onDelete: vi.fn(async () => undefined),
+      onExport: vi.fn(),
+      onCopyQuickOrder: vi.fn(async () => undefined),
+      onOpenQuickOrder: vi.fn(async () => undefined),
+      onDefaultExport: vi.fn(),
+    };
+
+    openSavedLists(document, [list], actions);
+
+    expect(document.body.textContent).toContain("モノタロウクイックオーダーをコピー");
+    expect(document.body.textContent).toContain("モノタロウクイックオーダー画面へ入力");
+  });
 });

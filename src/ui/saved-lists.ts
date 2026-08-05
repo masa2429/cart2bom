@@ -6,6 +6,8 @@ import { createProductImage } from "./product-image";
 export interface SavedListActions {
   confirmBeforeDelete: boolean;
   quickOrderAvailable?: boolean;
+  quickOrderLabel?: string;
+  quickOrderAutoFill?: boolean;
   onOpen(list: SavedList): void;
   onDuplicate(list: SavedList): Promise<void>;
   onRename(list: SavedList, name: string): Promise<void>;
@@ -75,12 +77,18 @@ export function openSavedLists(
       exportButton.addEventListener("click", () => actions.onExport(list, format));
       buttons.append(exportButton);
     }
-    const quickCopy = createButton(targetDocument, "秋月一括注文をコピー");
+    const quickOrderLabel = actions.quickOrderLabel ?? "クイックオーダー";
+    const quickCopy = createButton(targetDocument, `${quickOrderLabel}をコピー`);
     quickCopy.addEventListener("click", async () => {
       try { await actions.onCopyQuickOrder(list); }
       catch (error) { status.textContent = error instanceof Error ? error.message : "コピーに失敗しました。"; }
     });
-    const quickOpen = createButton(targetDocument, "秋月一括注文画面を開く");
+    const quickOpen = createButton(
+      targetDocument,
+      actions.quickOrderAutoFill
+        ? `${quickOrderLabel}画面へ入力`
+        : `${quickOrderLabel}画面を開く`,
+    );
     quickOpen.addEventListener("click", async () => {
       try { await actions.onOpenQuickOrder(list); }
       catch (error) { status.textContent = error instanceof Error ? error.message : "一括注文画面を開けませんでした。"; }

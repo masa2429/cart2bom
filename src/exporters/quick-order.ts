@@ -15,8 +15,9 @@ export function exportQuickOrder(list: SavedList, adapter: StoreAdapter): string
   const representative = new Map<string, SavedList["items"][number]>();
   const issues: string[] = [];
   for (const item of list.items.filter((candidate) => candidate.storeId === adapter.id)) {
-    if (!/^\d{6}$/.test(item.orderCode)) {
-      issues.push(`${item.name}: 通販コードは6桁の数字である必要があります。`);
+    const validCode = adapter.validateQuickOrderCode?.(item.orderCode) ?? /^\d{6}$/.test(item.orderCode);
+    if (!validCode) {
+      issues.push(`${item.name}: ${adapter.quickOrderCodeRequirement ?? "注文コードが正しくありません。"}`);
       continue;
     }
     if (!validateQuantity(item.quantity)) {
@@ -27,6 +28,9 @@ export function exportQuickOrder(list: SavedList, adapter: StoreAdapter): string
     representative.set(item.orderCode, item);
   }
   if (quantities.size === 0) issues.push("一括注文へ出力できる商品がありません。");
+  if (adapter.quickOrderCapacity && quantities.size > adapter.quickOrderCapacity) {
+    issues.push(`${adapter.quickOrderName ?? "クイックオーダー"}へ一度に出力できる商品は${adapter.quickOrderCapacity}件までです。`);
+  }
   if (issues.length > 0) throw new QuickOrderValidationError(issues);
   const items = Array.from(quantities, ([code, quantity]) => ({ ...representative.get(code)!, quantity }));
   return adapter.createQuickOrderText(items);

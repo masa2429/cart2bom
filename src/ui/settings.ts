@@ -23,7 +23,7 @@ export function openSettings(
   sideLabel.append(side);
 
   const format = targetDocument.createElement("select");
-  for (const [value, label] of [["csv", "CSV"], ["tsv", "TSV"], ["json", "JSON"], ["quickOrder", "秋月一括注文"]] as const) {
+  for (const [value, label] of [["csv", "CSV"], ["tsv", "TSV"], ["json", "JSON"], ["quickOrder", "クイックオーダー"]] as const) {
     const option = targetDocument.createElement("option");
     option.value = value;
     option.textContent = label;

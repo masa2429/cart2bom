@@ -73,6 +73,9 @@ export class MonotaroAdapter implements StoreAdapter {
   public readonly id = "monotaro";
   public readonly name = "モノタロウ";
   public readonly listNamePrefix = "モノタロウカート";
+  public readonly quickOrderName = "モノタロウクイックオーダー";
+  public readonly quickOrderCodeRequirement = "注文コードは8桁の数字である必要があります。";
+  public readonly quickOrderCapacity = 10;
 
   public constructor(private readonly now: () => Date = () => new Date()) {}
 
@@ -86,6 +89,62 @@ export class MonotaroAdapter implements StoreAdapter {
 
   public getCartUrl(): string {
     return "https://www.monotaro.com/basket/";
+  }
+
+  public validateQuickOrderCode(code: string): boolean {
+    return /^\d{8}$/.test(code);
+  }
+
+  public createQuickOrderText(items: CartItem[]): string {
+    return items.map((item) => `${item.orderCode}\t${item.quantity}`).join("\n");
+  }
+
+  public getQuickOrderUrl(): string {
+    return "https://www.monotaro.com/quick-order/";
+  }
+
+  public isQuickOrderPage(url: URL, _document: Document): boolean {
+    return this.matches(url) && /^\/quick-order\/?$/i.test(url.pathname);
+  }
+
+  /** Fills the ten visible code/quantity rows without submitting the form. */
+  public fillQuickOrder(targetDocument: Document, text: string): number {
+    const rows = text.split(/\r?\n/).filter((line) => line.trim()).map((line) => line.split("\t"));
+    if (rows.length > this.quickOrderCapacity) {
+      throw new Error(`モノタロウのクイックオーダーへ入力できる商品は${this.quickOrderCapacity}件までです。`);
+    }
+    const codeInputs = Array.from(targetDocument.querySelectorAll<HTMLInputElement>(
+      'input[aria-label="注文コード"][name^="q"]',
+    ));
+    const quantityInputs = Array.from(targetDocument.querySelectorAll<HTMLInputElement>(
+      'input[aria-label="数量"][name^="p"]',
+    ));
+    if (codeInputs.length < rows.length || quantityInputs.length < rows.length) {
+      throw new Error("モノタロウのクイックオーダー入力欄を確認できませんでした。");
+    }
+
+    const inputPrototype = targetDocument.defaultView?.HTMLInputElement.prototype;
+    const valueSetter = inputPrototype
+      ? Object.getOwnPropertyDescriptor(inputPrototype, "value")?.set
+      : undefined;
+    const InputEvent = targetDocument.defaultView?.Event ?? Event;
+    const setValue = (input: HTMLInputElement, value: string): void => {
+      if (valueSetter) valueSetter.call(input, value);
+      else input.value = value;
+      input.dispatchEvent(new InputEvent("input", { bubbles: true }));
+      input.dispatchEvent(new InputEvent("change", { bubbles: true }));
+    };
+
+    codeInputs.forEach((input) => setValue(input, ""));
+    quantityInputs.forEach((input) => setValue(input, ""));
+    rows.forEach(([code = "", quantity = ""], index) => {
+      const codeInput = codeInputs[index];
+      const quantityInput = quantityInputs[index];
+      if (!codeInput || !quantityInput) return;
+      setValue(codeInput, code);
+      setValue(quantityInput, quantity);
+    });
+    return rows.length;
   }
 
   /** Reads only basket item sections so recommendations below the basket are excluded. */

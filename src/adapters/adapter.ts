@@ -20,6 +20,12 @@ export interface StoreAdapter {
   isCartPage(url: URL, document: Document): boolean;
   getCartUrl(): string | null;
   extractCart(document: Document): CartExtractionResult;
+  readonly quickOrderName?: string;
+  readonly quickOrderCodeRequirement?: string;
+  readonly quickOrderCapacity?: number;
+  validateQuickOrderCode?(code: string): boolean;
   createQuickOrderText?(items: CartItem[]): string;
   getQuickOrderUrl?(): string | null;
+  isQuickOrderPage?(url: URL, document: Document): boolean;
+  fillQuickOrder?(document: Document, text: string): number;
 }

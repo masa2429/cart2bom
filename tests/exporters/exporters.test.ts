@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { AkizukiAdapter } from "../../src/adapters/akizuki";
+import { MonotaroAdapter } from "../../src/adapters/monotaro";
 import { CURRENT_SCHEMA_VERSION, type CartItem, type SavedList } from "../../src/core/models";
 import { parseSavedListJson } from "../../src/core/validation";
 import { exportCsv } from "../../src/exporters/csv";
@@ -55,6 +56,31 @@ describe("exporters", () => {
   it("不正な通販コードと数量を拒否する", () => {
     const invalid = { ...item, orderCode: "123", quantity: 0 };
     expect(() => exportQuickOrder({ ...list, items: [invalid] }, new AkizukiAdapter()))
+      .toThrow(QuickOrderValidationError);
+  });
+
+  it("モノタロウクイックオーダーへ8桁の注文コードと数量を出力する", () => {
+    const monotaroItem = {
+      ...item,
+      id: "monotaro:47817527",
+      storeId: "monotaro",
+      storeName: "モノタロウ",
+      orderCode: "47817527",
+      quantity: 2,
+    };
+    expect(exportQuickOrder({ ...list, items: [monotaroItem] }, new MonotaroAdapter()))
+      .toBe("47817527\t2");
+  });
+
+  it("モノタロウの10商品制限を超えるリストを拒否する", () => {
+    const items = Array.from({ length: 11 }, (_, index) => ({
+      ...item,
+      id: `monotaro:${String(10000000 + index)}`,
+      storeId: "monotaro",
+      storeName: "モノタロウ",
+      orderCode: String(10000000 + index),
+    }));
+    expect(() => exportQuickOrder({ ...list, items }, new MonotaroAdapter()))
       .toThrow(QuickOrderValidationError);
   });
 });
