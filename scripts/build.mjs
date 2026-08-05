@@ -12,15 +12,19 @@ const outputFile = resolve(projectRoot, "dist/cart2bom.user.js");
 
 const userScriptHeader = `// ==UserScript==
 // @name         Cart2BOM
-// @namespace    cart2bom
+// @namespace    https://github.com/masa2429/cart2bom
 // @version      ${packageJson.version}
 // @description  通販サイトのカートを保存・共有・再利用します
+// @homepageURL  https://github.com/masa2429/cart2bom
+// @supportURL   https://github.com/masa2429/cart2bom/issues
 // @match        https://akizukidenshi.com/*
 // @match        https://www.akizukidenshi.com/*
 // @run-at       document-idle
 // @grant        GM.getValue
 // @grant        GM.setValue
 // @grant        GM.deleteValue
+// @updateURL    https://raw.githubusercontent.com/masa2429/cart2bom/main/dist/cart2bom.user.js
+// @downloadURL  https://raw.githubusercontent.com/masa2429/cart2bom/main/dist/cart2bom.user.js
 // ==/UserScript==`;
 
 await mkdir(dirname(outputFile), { recursive: true });

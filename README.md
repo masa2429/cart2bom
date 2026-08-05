@@ -25,11 +25,11 @@ npm run build
 ## インストール
 
 1. TampermonkeyまたはViolentmonkeyをブラウザへインストールします。
-2. `dist/cart2bom.user.js`をブラウザで開くか、UserScript管理画面の新規スクリプトへ内容を貼り付けます。
+2. [GitHub上のCart2BOM UserScript](https://raw.githubusercontent.com/masa2429/cart2bom/main/dist/cart2bom.user.js)を開いてインストールします。ローカル開発版を使う場合は、`dist/cart2bom.user.js`をUserScript管理画面へ読み込むこともできます。
 3. インストールを確認し、秋月電子通商のページを再読み込みします。
 4. 画面下部の「🛒 Cart2BOM」ボタンが表示されることを確認します。
 
-GitHubの配布URLは未設定です。リポジトリ公開先が決まった時点で、UserScriptヘッダーへ`@updateURL`と`@downloadURL`を追加してください。
+GitHub版には`@updateURL`と`@downloadURL`が設定されています。今後のリリースでは`package.json`の`version`を上げてビルド・pushすると、Tampermonkey／Violentmonkeyの更新確認対象になります。更新確認の間隔と自動更新の可否はUserScriptマネージャー側の設定に従います。
 
 ## 使い方
 
@@ -63,7 +63,6 @@ Cart2BOMが表示する情報は、読み取り時点のページ内容に基づ
 - Chrome＋Tampermonkeyへ実インストールし、秋月電子通商のログイン済み実カート（商品12種類、数量合計53）で、読み取り、編集画面、保存、再表示を確認済みです。
 - Edge＋TampermonkeyとFirefox＋Violentmonkey、および実ブラウザでのファイル出力、JSON再インポート、一括注文画面への貼り付けは未確認です。
 - サイトの画面構成が変わると商品を抽出できない場合があります。
-- GitHub配布URLが未確定のため自動更新URLはまだありません。
 - モノタロウとミスミのファイルは将来実装用の空モジュールです。
 
 ## ドキュメント

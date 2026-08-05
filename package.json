@@ -5,6 +5,11 @@
   "description": "複数通販サイトのカートを保存・共有可能な部品リストへ変換するUserScript",
   "author": "morita_masato",
   "license": "MIT",
+  "homepage": "https://github.com/masa2429/cart2bom",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/masa2429/cart2bom.git"
+  },
   "type": "module",
   "scripts": {
     "build": "node scripts/build.mjs",

@@ -91,7 +91,7 @@ UserScriptヘッダーの例：
 ```javascript
 // ==UserScript==
 // @name         Cart2BOM
-// @namespace    https://github.com/<owner>/cart2bom
+// @namespace    https://github.com/masa2429/cart2bom
 // @version      0.1.0
 // @description  通販サイトのカートを保存・共有・再利用します
 // @match        https://akizukidenshi.com/*
@@ -104,8 +104,8 @@ UserScriptヘッダーの例：
 // @grant        GM.deleteValue
 // @grant        GM.download
 // @grant        GM_info
-// @updateURL    https://github.com/<owner>/cart2bom/raw/main/dist/cart2bom.user.js
-// @downloadURL  https://github.com/<owner>/cart2bom/raw/main/dist/cart2bom.user.js
+// @updateURL    https://raw.githubusercontent.com/masa2429/cart2bom/main/dist/cart2bom.user.js
+// @downloadURL  https://raw.githubusercontent.com/masa2429/cart2bom/main/dist/cart2bom.user.js
 // ==/UserScript==
 ```
 
