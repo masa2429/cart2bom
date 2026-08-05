@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>秋月カート一括注文ブックマークレット</title>
+<style>
+  :root { color-scheme: light dark; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Yu Gothic UI", sans-serif;
+    background: #f4f5f7;
+    color: #222;
+  }
+  main {
+    max-width: 760px;
+    margin: 48px auto;
+    padding: 28px;
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 12px 40px rgba(0,0,0,.12);
+  }
+  h1 { margin: 0 0 12px; font-size: 26px; }
+  p, li { line-height: 1.75; }
+  .bookmarklet {
+    display: inline-block;
+    margin: 12px 0 18px;
+    padding: 15px 22px;
+    border-radius: 10px;
+    background: #1467c8;
+    color: #fff;
+    text-decoration: none;
+    font-weight: 700;
+    cursor: grab;
+    box-shadow: 0 5px 14px rgba(20,103,200,.25);
+  }
+  .box {
+    margin-top: 20px;
+    padding: 16px 18px;
+    border: 1px solid #ccd2da;
+    border-radius: 10px;
+    background: #f8fafc;
+  }
+  button {
+    appearance: none;
+    border: 1px solid #888;
+    border-radius: 8px;
+    padding: 10px 14px;
+    background: #fff;
+    color: #222;
+    cursor: pointer;
+    font-weight: 600;
+  }
+  #status { min-height: 1.5em; margin-top: 8px; color: #176b2c; }
+  code { font-family: Consolas, monospace; }
+  @media (prefers-color-scheme: dark) {
+    body { background: #17191c; color: #eee; }
+    main { background: #24272b; }
+    .box { background: #1e2125; border-color: #555; }
+    button { background: #24272b; color: #eee; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <h1>秋月カート → 一括注文形式</h1>
+  <p>
+    下の青いボタンを<strong>ブックマークバーへドラッグ</strong>してください。
+    以後は、秋月電子の買い物かごを開き、登録したブックマークを押すだけです。
+  </p>
+
+  <a class="bookmarklet" href="javascript:(() =&gt; {&#x27;use strict&#x27;;if (!/(^|\.)akizukidenshi\.com$/i.test(location.hostname)) {alert(&#x27;秋月電子通商のページで実行してください。&#x27;);return;}const oldPanel = document.getElementById(&#x27;akizuki-cart-exporter-panel&#x27;);if (oldPanel) oldPanel.remove();const isVisible = (el) =&gt; {if (!(el instanceof HTMLElement)) return false;const style = getComputedStyle(el);return style.display !== &#x27;none&#x27; &amp;&amp;style.visibility !== &#x27;hidden&#x27; &amp;&amp;el.getClientRects().length &gt; 0;};const productCodeFromHref = (href) =&gt; {const m = String(href || &#x27;&#x27;).match(/\/catalog\/g\/g(\d{6})(?:\/|[?#]|$)/i);return m ? m[1] : null;};const numericQuantity = (el) =&gt; {const raw = String(el.value ?? &#x27;&#x27;).trim();if (!/^\d+$/.test(raw)) return null;const value = Number(raw);return Number.isSafeInteger(value) &amp;&amp; value &gt; 0 ? value : null;};const quantityScore = (el) =&gt; {const meta = [el.name,el.id,el.className,el.title,el.getAttribute(&#x27;aria-label&#x27;),el.getAttribute(&#x27;placeholder&#x27;)].filter(Boolean).join(&#x27; &#x27;);let score = 0;if (/qty|quantity|amount|count|kosu|数量|個数|購入数|購入数量/i.test(meta)) score += 20;if ((el.type || &#x27;&#x27;).toLowerCase() === &#x27;number&#x27;) score += 8;const cell = el.closest(&#x27;td,th,div,li&#x27;);if (cell &amp;&amp; /数量|個数|購入数|購入数量/.test(cell.innerText || &#x27;&#x27;)) score += 6;const max = Number(el.max);if (Number.isFinite(max) &amp;&amp; max &gt; 0 &amp;&amp; max &lt;= 99999) score += 2;return score;};const findQuantityNearLink = (link, code) =&gt; {let node = link;for (let depth = 0; node &amp;&amp; depth &lt; 12; depth++, node = node.parentElement) {const codes = new Set([...node.querySelectorAll(&#x27;a[href*=&quot;/catalog/g/g&quot;]&#x27;)].map((a) =&gt; productCodeFromHref(a.href)).filter(Boolean));const selfCode = node.matches?.(&#x27;a[href*=&quot;/catalog/g/g&quot;]&#x27;)? productCodeFromHref(node.href): null;if (selfCode) codes.add(selfCode);if (codes.size !== 1 || !codes.has(code)) continue;const candidates = [...node.querySelectorAll(&#x27;input,select&#x27;)].filter((el) =&gt; !el.disabled &amp;&amp; isVisible(el)).map((el) =&gt; ({el,quantity: numericQuantity(el),score: quantityScore(el)})).filter((item) =&gt; item.quantity !== null).sort((a, b) =&gt; b.score - a.score);if (candidates.length &amp;&amp; (candidates[0].score &gt; 0 || node.matches(&#x27;tr,li&#x27;))) {return candidates[0].quantity;}}return null;};const items = new Map();for (const link of document.querySelectorAll(&#x27;a[href*=&quot;/catalog/g/g&quot;]&#x27;)) {const code = productCodeFromHref(link.href);if (!code) continue;const quantity = findQuantityNearLink(link, code);if (quantity !== null) {items.set(code, quantity);}}for (const input of document.querySelectorAll(&#x27;input,select&#x27;)) {if (input.disabled || !isVisible(input)) continue;const quantity = numericQuantity(input);if (quantity === null || quantityScore(input) &lt;= 0) continue;let node = input;for (let depth = 0; node &amp;&amp; depth &lt; 10; depth++, node = node.parentElement) {const text = node.innerText || &#x27;&#x27;;const textMatch = text.match(/販売コード\s*[：:]?\s*(\d{6})/);const hrefCodes = new Set([...node.querySelectorAll(&#x27;a[href*=&quot;/catalog/g/g&quot;]&#x27;)].map((a) =&gt; productCodeFromHref(a.href)).filter(Boolean));const code = textMatch?.[1] || (hrefCodes.size === 1 ? [...hrefCodes][0] : null);if (code) {if (!items.has(code)) items.set(code, quantity);break;}}}if (items.size === 0) {alert(&#x27;カートの商品を抽出できませんでした。\n&#x27; +&#x27;秋月電子の「買い物カゴ」ページを開いてから実行してください。&#x27;);return;}const output = [...items.entries()].map(([code, quantity]) =&gt; `${code}\t${quantity}`).join(&#x27;\n&#x27;);const overlay = document.createElement(&#x27;div&#x27;);overlay.id = &#x27;akizuki-cart-exporter-panel&#x27;;overlay.style.cssText = [&#x27;position:fixed&#x27;,&#x27;inset:0&#x27;,&#x27;z-index:2147483647&#x27;,&#x27;background:rgba(0,0,0,.45)&#x27;,&#x27;display:flex&#x27;,&#x27;align-items:center&#x27;,&#x27;justify-content:center&#x27;,&#x27;padding:20px&#x27;,&#x27;font-family:-apple-system,BlinkMacSystemFont,&quot;Segoe UI&quot;,&quot;Yu Gothic UI&quot;,sans-serif&#x27;].join(&#x27;;&#x27;);const panel = document.createElement(&#x27;div&#x27;);panel.style.cssText = [&#x27;width:min(680px,calc(100vw - 40px))&#x27;,&#x27;max-height:calc(100vh - 40px)&#x27;,&#x27;overflow:auto&#x27;,&#x27;background:#fff&#x27;,&#x27;color:#222&#x27;,&#x27;border-radius:14px&#x27;,&#x27;box-shadow:0 18px 60px rgba(0,0,0,.35)&#x27;,&#x27;padding:22px&#x27;,&#x27;box-sizing:border-box&#x27;].join(&#x27;;&#x27;);const title = document.createElement(&#x27;div&#x27;);title.textContent = &#x27;秋月カート → 一括注文形式&#x27;;title.style.cssText = &#x27;font-size:20px;font-weight:700;margin-bottom:6px&#x27;;const summary = document.createElement(&#x27;div&#x27;);summary.textContent = `${items.size}種類を抽出しました。内容を修正してからコピーすることもできます。`;summary.style.cssText = &#x27;font-size:14px;color:#555;margin-bottom:12px;line-height:1.6&#x27;;const textarea = document.createElement(&#x27;textarea&#x27;);textarea.value = output;textarea.spellcheck = false;textarea.style.cssText = [&#x27;display:block&#x27;,&#x27;width:100%&#x27;,&#x27;height:260px&#x27;,&#x27;resize:vertical&#x27;,&#x27;box-sizing:border-box&#x27;,&#x27;border:1px solid #aaa&#x27;,&#x27;border-radius:8px&#x27;,&#x27;padding:12px&#x27;,&#x27;font:15px/1.55 Consolas,monospace&#x27;,&#x27;color:#111&#x27;,&#x27;background:#fff&#x27;].join(&#x27;;&#x27;);const status = document.createElement(&#x27;div&#x27;);status.style.cssText = &#x27;min-height:24px;margin-top:8px;font-size:14px;color:#176b2c&#x27;;const buttons = document.createElement(&#x27;div&#x27;);buttons.style.cssText = &#x27;display:flex;flex-wrap:wrap;gap:8px;margin-top:10px&#x27;;const makeButton = (label, primary = false) =&gt; {const button = document.createElement(&#x27;button&#x27;);button.type = &#x27;button&#x27;;button.textContent = label;button.style.cssText = [&#x27;appearance:none&#x27;,&#x27;border:&#x27; + (primary ? &#x27;1px solid #1467c8&#x27; : &#x27;1px solid #999&#x27;),&#x27;background:&#x27; + (primary ? &#x27;#1467c8&#x27; : &#x27;#fff&#x27;),&#x27;color:&#x27; + (primary ? &#x27;#fff&#x27; : &#x27;#222&#x27;),&#x27;border-radius:8px&#x27;,&#x27;padding:10px 14px&#x27;,&#x27;font:600 14px/1.2 -apple-system,BlinkMacSystemFont,&quot;Segoe UI&quot;,&quot;Yu Gothic UI&quot;,sans-serif&#x27;,&#x27;cursor:pointer&#x27;].join(&#x27;;&#x27;);return button;};const copyButton = makeButton(&#x27;コピー&#x27;, true);const orderButton = makeButton(&#x27;一括注文ページを開く&#x27;);const saveButton = makeButton(&#x27;TXT保存&#x27;);const closeButton = makeButton(&#x27;閉じる&#x27;);const copyText = async () =&gt; {const text = textarea.value.trim();if (!text) {status.textContent = &#x27;コピーする内容がありません。&#x27;;return false;}try {await navigator.clipboard.writeText(text);status.textContent = &#x27;クリップボードにコピーしました。&#x27;;return true;} catch (_) {try {textarea.focus();textarea.select();const ok = document.execCommand(&#x27;copy&#x27;);status.textContent = ok? &#x27;クリップボードにコピーしました。&#x27;: &#x27;自動コピーできませんでした。Ctrl+Cでコピーしてください。&#x27;;return ok;} catch (_) {status.textContent = &#x27;自動コピーできませんでした。Ctrl+Cでコピーしてください。&#x27;;return false;}}};copyButton.addEventListener(&#x27;click&#x27;, copyText);orderButton.addEventListener(&#x27;click&#x27;, async () =&gt; {await copyText();window.open(&#x27;https://akizukidenshi.com/catalog/quickorder/blanketorder.aspx&#x27;,&#x27;_blank&#x27;,&#x27;noopener&#x27;);});saveButton.addEventListener(&#x27;click&#x27;, () =&gt; {const now = new Date();const pad = (n) =&gt; String(n).padStart(2, &#x27;0&#x27;);const filename =`akizuki_cart_${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}` +`_${pad(now.getHours())}${pad(now.getMinutes())}.txt`;const blob = new Blob([textarea.value.replace(/\n/g, &#x27;\r\n&#x27;)], {type: &#x27;text/plain;charset=utf-8&#x27;});const url = URL.createObjectURL(blob);const a = document.createElement(&#x27;a&#x27;);a.href = url;a.download = filename;a.click();setTimeout(() =&gt; URL.revokeObjectURL(url), 1000);status.textContent = `${filename} を保存しました。`;});const close = () =&gt; overlay.remove();closeButton.addEventListener(&#x27;click&#x27;, close);overlay.addEventListener(&#x27;click&#x27;, (event) =&gt; {if (event.target === overlay) close();});document.addEventListener(&#x27;keydown&#x27;,(event) =&gt; {if (event.key === &#x27;Escape&#x27; &amp;&amp; document.body.contains(overlay)) close();},{ once: true });buttons.append(copyButton, orderButton, saveButton, closeButton);panel.append(title, summary, textarea, status, buttons);overlay.append(panel);document.body.append(overlay);copyText();})();">秋月カートを一括注文形式で出力</a>
+
+  <ol>
+    <li>上の青いボタンをブックマークバーへドラッグします。</li>
+    <li>秋月電子の「買い物カゴ」ページを開きます。</li>
+    <li>登録したブックマークをクリックします。</li>
+    <li>抽出結果が表示され、自動的にコピーされます。</li>
+    <li>「一括注文ページを開く」を押し、入力欄へ貼り付けます。</li>
+  </ol>
+
+  <div class="box">
+    <strong>ドラッグできない場合</strong>
+    <p>下のボタンでブックマークレットURLをコピーし、既存ブックマークのURL欄へ貼り付けてください。</p>
+    <button id="copy-url">ブックマークレットURLをコピー</button>
+    <div id="status"></div>
+  </div>
+
+  <div class="box">
+    <strong>機能</strong>
+    <p>
+      販売コードと数量をタブ区切りで抽出し、重複表示を避けて一覧化します。
+      表示された内容は、その場で修正・再コピー・TXT保存できます。
+    </p>
+  </div>
+</main>
+
+<script>
+const bookmarklet = 'javascript:(() => {\'use strict\';if (!/(^|\\.)akizukidenshi\\.com$/i.test(location.hostname)) {alert(\'秋月電子通商のページで実行してください。\');return;}const oldPanel = document.getElementById(\'akizuki-cart-exporter-panel\');if (oldPanel) oldPanel.remove();const isVisible = (el) => {if (!(el instanceof HTMLElement)) return false;const style = getComputedStyle(el);return style.display !== \'none\' &&style.visibility !== \'hidden\' &&el.getClientRects().length > 0;};const productCodeFromHref = (href) => {const m = String(href || \'\').match(/\\/catalog\\/g\\/g(\\d{6})(?:\\/|[?#]|$)/i);return m ? m[1] : null;};const numericQuantity = (el) => {const raw = String(el.value ?? \'\').trim();if (!/^\\d+$/.test(raw)) return null;const value = Number(raw);return Number.isSafeInteger(value) && value > 0 ? value : null;};const quantityScore = (el) => {const meta = [el.name,el.id,el.className,el.title,el.getAttribute(\'aria-label\'),el.getAttribute(\'placeholder\')].filter(Boolean).join(\' \');let score = 0;if (/qty|quantity|amount|count|kosu|数量|個数|購入数|購入数量/i.test(meta)) score += 20;if ((el.type || \'\').toLowerCase() === \'number\') score += 8;const cell = el.closest(\'td,th,div,li\');if (cell && /数量|個数|購入数|購入数量/.test(cell.innerText || \'\')) score += 6;const max = Number(el.max);if (Number.isFinite(max) && max > 0 && max <= 99999) score += 2;return score;};const findQuantityNearLink = (link, code) => {let node = link;for (let depth = 0; node && depth < 12; depth++, node = node.parentElement) {const codes = new Set([...node.querySelectorAll(\'a[href*="/catalog/g/g"]\')].map((a) => productCodeFromHref(a.href)).filter(Boolean));const selfCode = node.matches?.(\'a[href*="/catalog/g/g"]\')? productCodeFromHref(node.href): null;if (selfCode) codes.add(selfCode);if (codes.size !== 1 || !codes.has(code)) continue;const candidates = [...node.querySelectorAll(\'input,select\')].filter((el) => !el.disabled && isVisible(el)).map((el) => ({el,quantity: numericQuantity(el),score: quantityScore(el)})).filter((item) => item.quantity !== null).sort((a, b) => b.score - a.score);if (candidates.length && (candidates[0].score > 0 || node.matches(\'tr,li\'))) {return candidates[0].quantity;}}return null;};const items = new Map();for (const link of document.querySelectorAll(\'a[href*="/catalog/g/g"]\')) {const code = productCodeFromHref(link.href);if (!code) continue;const quantity = findQuantityNearLink(link, code);if (quantity !== null) {items.set(code, quantity);}}for (const input of document.querySelectorAll(\'input,select\')) {if (input.disabled || !isVisible(input)) continue;const quantity = numericQuantity(input);if (quantity === null || quantityScore(input) <= 0) continue;let node = input;for (let depth = 0; node && depth < 10; depth++, node = node.parentElement) {const text = node.innerText || \'\';const textMatch = text.match(/販売コード\\s*[：:]?\\s*(\\d{6})/);const hrefCodes = new Set([...node.querySelectorAll(\'a[href*="/catalog/g/g"]\')].map((a) => productCodeFromHref(a.href)).filter(Boolean));const code = textMatch?.[1] || (hrefCodes.size === 1 ? [...hrefCodes][0] : null);if (code) {if (!items.has(code)) items.set(code, quantity);break;}}}if (items.size === 0) {alert(\'カートの商品を抽出できませんでした。\\n\' +\'秋月電子の「買い物カゴ」ページを開いてから実行してください。\');return;}const output = [...items.entries()].map(([code, quantity]) => `${code}\\t${quantity}`).join(\'\\n\');const overlay = document.createElement(\'div\');overlay.id = \'akizuki-cart-exporter-panel\';overlay.style.cssText = [\'position:fixed\',\'inset:0\',\'z-index:2147483647\',\'background:rgba(0,0,0,.45)\',\'display:flex\',\'align-items:center\',\'justify-content:center\',\'padding:20px\',\'font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Yu Gothic UI",sans-serif\'].join(\';\');const panel = document.createElement(\'div\');panel.style.cssText = [\'width:min(680px,calc(100vw - 40px))\',\'max-height:calc(100vh - 40px)\',\'overflow:auto\',\'background:#fff\',\'color:#222\',\'border-radius:14px\',\'box-shadow:0 18px 60px rgba(0,0,0,.35)\',\'padding:22px\',\'box-sizing:border-box\'].join(\';\');const title = document.createElement(\'div\');title.textContent = \'秋月カート → 一括注文形式\';title.style.cssText = \'font-size:20px;font-weight:700;margin-bottom:6px\';const summary = document.createElement(\'div\');summary.textContent = `${items.size}種類を抽出しました。内容を修正してからコピーすることもできます。`;summary.style.cssText = \'font-size:14px;color:#555;margin-bottom:12px;line-height:1.6\';const textarea = document.createElement(\'textarea\');textarea.value = output;textarea.spellcheck = false;textarea.style.cssText = [\'display:block\',\'width:100%\',\'height:260px\',\'resize:vertical\',\'box-sizing:border-box\',\'border:1px solid #aaa\',\'border-radius:8px\',\'padding:12px\',\'font:15px/1.55 Consolas,monospace\',\'color:#111\',\'background:#fff\'].join(\';\');const status = document.createElement(\'div\');status.style.cssText = \'min-height:24px;margin-top:8px;font-size:14px;color:#176b2c\';const buttons = document.createElement(\'div\');buttons.style.cssText = \'display:flex;flex-wrap:wrap;gap:8px;margin-top:10px\';const makeButton = (label, primary = false) => {const button = document.createElement(\'button\');button.type = \'button\';button.textContent = label;button.style.cssText = [\'appearance:none\',\'border:\' + (primary ? \'1px solid #1467c8\' : \'1px solid #999\'),\'background:\' + (primary ? \'#1467c8\' : \'#fff\'),\'color:\' + (primary ? \'#fff\' : \'#222\'),\'border-radius:8px\',\'padding:10px 14px\',\'font:600 14px/1.2 -apple-system,BlinkMacSystemFont,"Segoe UI","Yu Gothic UI",sans-serif\',\'cursor:pointer\'].join(\';\');return button;};const copyButton = makeButton(\'コピー\', true);const orderButton = makeButton(\'一括注文ページを開く\');const saveButton = makeButton(\'TXT保存\');const closeButton = makeButton(\'閉じる\');const copyText = async () => {const text = textarea.value.trim();if (!text) {status.textContent = \'コピーする内容がありません。\';return false;}try {await navigator.clipboard.writeText(text);status.textContent = \'クリップボードにコピーしました。\';return true;} catch (_) {try {textarea.focus();textarea.select();const ok = document.execCommand(\'copy\');status.textContent = ok? \'クリップボードにコピーしました。\': \'自動コピーできませんでした。Ctrl+Cでコピーしてください。\';return ok;} catch (_) {status.textContent = \'自動コピーできませんでした。Ctrl+Cでコピーしてください。\';return false;}}};copyButton.addEventListener(\'click\', copyText);orderButton.addEventListener(\'click\', async () => {await copyText();window.open(\'https://akizukidenshi.com/catalog/quickorder/blanketorder.aspx\',\'_blank\',\'noopener\');});saveButton.addEventListener(\'click\', () => {const now = new Date();const pad = (n) => String(n).padStart(2, \'0\');const filename =`akizuki_cart_${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}` +`_${pad(now.getHours())}${pad(now.getMinutes())}.txt`;const blob = new Blob([textarea.value.replace(/\\n/g, \'\\r\\n\')], {type: \'text/plain;charset=utf-8\'});const url = URL.createObjectURL(blob);const a = document.createElement(\'a\');a.href = url;a.download = filename;a.click();setTimeout(() => URL.revokeObjectURL(url), 1000);status.textContent = `${filename} を保存しました。`;});const close = () => overlay.remove();closeButton.addEventListener(\'click\', close);overlay.addEventListener(\'click\', (event) => {if (event.target === overlay) close();});document.addEventListener(\'keydown\',(event) => {if (event.key === \'Escape\' && document.body.contains(overlay)) close();},{ once: true });buttons.append(copyButton, orderButton, saveButton, closeButton);panel.append(title, summary, textarea, status, buttons);overlay.append(panel);document.body.append(overlay);copyText();})();';
+document.getElementById('copy-url').addEventListener('click', async () => {
+  const status = document.getElementById('status');
+  try {
+    await navigator.clipboard.writeText(bookmarklet);
+    status.textContent = 'URLをコピーしました。';
+  } catch (_) {
+    const area = document.createElement('textarea');
+    area.value = bookmarklet;
+    document.body.append(area);
+    area.select();
+    const ok = document.execCommand('copy');
+    area.remove();
+    status.textContent = ok ? 'URLをコピーしました。' : 'コピーできませんでした。';
+  }
+});
+</script>
+</body>
+</html>
