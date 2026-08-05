@@ -224,7 +224,17 @@ function createStoreActions(
         });
         actions.append(copyAll);
         if (quickOrderUrl) {
-          const open = element(targetDocument, "a", "viewer-button viewer-button-primary", "公式入力画面を開く");
+          const autoFill = element(
+            targetDocument,
+            "a",
+            "viewer-button viewer-button-primary",
+            "Cart2BOMで自動入力",
+          );
+          autoFill.href = createSharedQuickOrderUrl(shareUrl, quickOrderUrl, adapter.id);
+          autoFill.target = "_blank";
+          autoFill.rel = "noopener noreferrer";
+          actions.append(autoFill);
+          const open = element(targetDocument, "a", "viewer-button viewer-button-secondary", "公式入力画面を開く");
           open.href = quickOrderUrl;
           open.target = "_blank";
           open.rel = "noopener noreferrer";

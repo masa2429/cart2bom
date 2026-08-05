@@ -61,6 +61,10 @@ describe("GitHub Pages viewer", () => {
     expect(akizukiProceed?.href).toContain("blanketorder.aspx?regist_goods=105148+2#cart2bom=");
     expect(new URL(akizukiProceed?.href ?? "https://example.com").searchParams.get("regist_goods")).toBe("105148 2");
     expect(akizukiProceed?.href).toContain("&action=quick-order&store=akizuki");
+    const monotaroAutoFill = Array.from(document.querySelectorAll<HTMLAnchorElement>("a"))
+      .find((candidate) => candidate.textContent === "Cart2BOMで自動入力");
+    expect(monotaroAutoFill?.href).toContain("www.monotaro.com/quick-order/#cart2bom=");
+    expect(monotaroAutoFill?.href).toContain("&action=quick-order&store=monotaro");
     const monotaroProceed = Array.from(document.querySelectorAll<HTMLAnchorElement>("a"))
       .find((candidate) => candidate.textContent === "公式入力画面を開く");
     expect(monotaroProceed?.href).toBe("https://www.monotaro.com/quick-order/");
