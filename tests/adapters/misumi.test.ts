@@ -1,7 +1,11 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { beforeEach, describe, expect, it } from "vitest";
-import { MisumiAdapter, parseMisumiYen } from "../../src/adapters/misumi";
+import {
+  MisumiAdapter,
+  normalizeMisumiPartNumber,
+  parseMisumiYen,
+} from "../../src/adapters/misumi";
 import type { CartItem } from "../../src/core/models";
 
 const fixture = readFileSync(resolve("tests/fixtures/misumi-cart.html"), "utf8");
@@ -22,6 +26,10 @@ describe("MisumiAdapter", () => {
   it("金額表記を整数へ変換する", () => {
     expect(parseMisumiYen("10,512円")).toBe(10512);
     expect(parseMisumiYen("-")).toBeNull();
+  });
+
+  it("型番末尾へ表示された在庫ラベルを除去する", () => {
+    expect(normalizeMisumiPartNumber("DR1-2000在庫品")).toBe("DR1-2000");
   });
 
   it("型番、メーカー、数量、価格、出荷日、画像を抽出する", () => {
@@ -73,7 +81,7 @@ describe("MisumiAdapter", () => {
     expect(adapter.validateQuickOrderCode("CB3-10")).toBe(true);
     expect(adapter.validateQuickOrderCode("bad\tcode")).toBe(false);
     expect(adapter.createQuickOrderText([
-      { orderCode: "CB3-10", quantity: 4, manufacturerName: "ミスミ" },
+      { orderCode: "CB3-10在庫品", quantity: 4, manufacturerName: "ミスミ" },
       { orderCode: "MPCL840", quantity: 1, manufacturerName: "ミスミ" },
     ] as CartItem[])).toBe("CB3-10\t4\tミスミ\nMPCL840\t1\tミスミ");
   });

@@ -42,6 +42,26 @@ function firstPrice(container: Element | null): number | null {
   return parseMisumiYen(container?.querySelector("p")?.textContent);
 }
 
+export function normalizeMisumiPartNumber(value: string): string {
+  return value.replace(/在庫品$/u, "").trim();
+}
+
+function readPartNumber(link: HTMLAnchorElement | null, codeElement: Element | null): string {
+  if (link) {
+    try {
+      const productCode = new URL(link.href).searchParams.get("ProductCode");
+      if (productCode) return normalizeMisumiPartNumber(productCode);
+    } catch {
+      // Fall back to the visible code when the product URL is malformed.
+    }
+  }
+  const directText = Array.from(codeElement?.childNodes ?? [])
+    .filter((node) => node.nodeType === Node.TEXT_NODE)
+    .map((node) => node.textContent ?? "")
+    .join("");
+  return normalizeMisumiPartNumber(directText || normalizeText(codeElement?.textContent));
+}
+
 export class MisumiAdapter implements StoreAdapter {
   public readonly id = "misumi";
   public readonly name = "ミスミ";
@@ -72,11 +92,14 @@ export class MisumiAdapter implements StoreAdapter {
   }
 
   public validateQuickOrderCode(code: string): boolean {
-    return code.length > 0 && code.length <= 256 && !/[\t\r\n]/.test(code);
+    const normalized = normalizeMisumiPartNumber(code);
+    return normalized.length > 0 && normalized.length <= 256 && !/[\t\r\n]/.test(normalized);
   }
 
   public createQuickOrderText(items: CartItem[]): string {
-    return items.map((item) => `${item.orderCode}\t${item.quantity}\t${item.manufacturerName ?? ""}`).join("\n");
+    return items
+      .map((item) => `${normalizeMisumiPartNumber(item.orderCode)}\t${item.quantity}\t${item.manufacturerName ?? ""}`)
+      .join("\n");
   }
 
   /** Selects cart lines so MISUMI loads current prices and shipping dates. */
@@ -95,7 +118,13 @@ export class MisumiAdapter implements StoreAdapter {
 
   /** Uses MISUMI's Excel-copy workflow and stops after adding items to the cart. */
   public async submitQuickOrder(targetDocument: Document, text: string): Promise<number> {
-    const rows = text.split(/\r?\n/).filter((line) => line.trim());
+    const rows = text
+      .split(/\r?\n/)
+      .filter((line) => line.trim())
+      .map((line) => {
+        const [code = "", ...columns] = line.split("\t");
+        return [normalizeMisumiPartNumber(code), ...columns].join("\t");
+      });
     const textarea = targetDocument.querySelector<HTMLTextAreaElement>(
       'textarea[data-testid="excel-copy-input"]',
     );
@@ -145,8 +174,11 @@ export class MisumiAdapter implements StoreAdapter {
     const warnings: ExtractionWarning[] = [];
 
     for (const row of rows) {
-      const orderCode = normalizeText(row.querySelector('[class*="CartDetailTile_productCode"]')?.textContent);
       const productLink = row.querySelector<HTMLAnchorElement>('a[href*="/vona2/detail/"]');
+      const orderCode = readPartNumber(
+        productLink,
+        row.querySelector('[class*="CartDetailTile_productCode"]'),
+      );
       const name = normalizeText(productLink?.textContent);
       const quantityCell = row.querySelector('[class*="CartDetailTile_quantityCell"]');
       const quantity = parsePositiveInteger(quantityCell?.querySelector<HTMLInputElement>("input")?.value);
