@@ -71,7 +71,7 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .viewer-copy-table thead th { color: #657387; font-weight: 600; }
 .viewer-copy-field-name { white-space: nowrap; color: #657387; font-weight: 600; }
 .viewer-sidebar .viewer-copy-table .viewer-button-copy-value { width: 100%; min-height: 32px; padding: 5px 7px; border-color: #9fb0c3; background: #fff; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 12px; }
-.viewer-sidebar .viewer-copy-table .viewer-copy-done { border-color: #2a8a55; background: #eaf7ef; color: #17633b; }
+.viewer-sidebar .viewer-copy-done { border-color: #2a8a55; background: #eaf7ef; color: #17633b; }
 .viewer-muted { color: #657387; }
 .viewer-error { color: #b3261e; white-space: pre-wrap; }
 .viewer-empty-state { max-width: 680px; margin: 80px auto; border: 1px solid #dce3eb; border-radius: 18px; padding: 40px; text-align: center; background: #fff; }

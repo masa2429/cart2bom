@@ -120,7 +120,7 @@ describe("GitHub Pages viewer", () => {
     expect(document.body.textContent).not.toContain("公式の一括入力画面を開く");
   });
 
-  it("モノタロウは10商品ごとにq0-p9へ貼り付ける値を個別コピーできる", async () => {
+  it("モノタロウは一括入力用データとq0-p9へ貼り付ける値をコピーできる", async () => {
     const items = Array.from({ length: 11 }, (_, index) => ({
       ...list.items[1]!,
       id: `monotaro:${10_000_000 + index}`,
@@ -136,13 +136,19 @@ describe("GitHub Pages viewer", () => {
     expect(guides[0]?.open).toBe(true);
     expect(guides[0]?.textContent).toContain("1回目の入力補助（10商品）");
     expect(guides[1]?.textContent).toContain("2回目の入力補助（1商品）");
+    const bulk = Array.from(document.querySelectorAll<HTMLButtonElement>("button"))
+      .find((candidate) => candidate.textContent === "一括入力用データをコピー");
     const code = document.querySelector<HTMLButtonElement>('button[aria-label="q0用の10000000をコピー"]');
     const quantity = document.querySelector<HTMLButtonElement>('button[aria-label="p0用の1をコピー"]');
+    bulk?.click();
     code?.click();
     quantity?.click();
-    await vi.waitFor(() => expect(writeText).toHaveBeenCalledTimes(2));
-    expect(writeText.mock.calls[0]?.[0]).toBe("10000000");
-    expect(writeText.mock.calls[1]?.[0]).toBe("1");
+    await vi.waitFor(() => expect(writeText).toHaveBeenCalledTimes(3));
+    expect(writeText.mock.calls[0]?.[0]).toContain("10000000 1\n10000001 2");
+    expect(writeText.mock.calls[0]?.[0]).toContain("10000010 11");
+    expect(writeText.mock.calls[1]?.[0]).toBe("10000000");
+    expect(writeText.mock.calls[2]?.[0]).toBe("1");
+    await vi.waitFor(() => expect(bulk?.classList.contains("viewer-copy-done")).toBe(true));
     await vi.waitFor(() => expect(code?.classList.contains("viewer-copy-done")).toBe(true));
     expect(document.querySelector('form[action="https://www.monotaro.com/monotaroMain.py"]')).toBeNull();
   });

@@ -211,7 +211,18 @@ function createStoreActions(
       if (adapter.id === "monotaro") {
         hasCombinedAction = true;
         guidance.textContent =
-          "公式画面を開き、下の注文コード・数量をクリックして、表示されたq0/p0から順に貼り付けてください。";
+          "一括入力欄がある場合は全商品を一度にコピーできます。通常のクイックオーダーでは、下の値をq0/p0から順に貼り付けてください。";
+        const copyAll = button(targetDocument, "一括入力用データをコピー");
+        copyAll.addEventListener("click", () => {
+          const bulkText = batches.join("\n").replace(/\t/g, " ");
+          void copyText(targetDocument, bulkText).then(() => {
+            copyAll.classList.add("viewer-copy-done");
+            status.textContent = "注文コードと数量を一括コピーしました。一括入力欄へ貼り付けてください。";
+          }).catch((caught: unknown) => {
+            status.textContent = caught instanceof Error ? caught.message : "コピーできませんでした。";
+          });
+        });
+        actions.append(copyAll);
         if (quickOrderUrl) {
           const open = element(targetDocument, "a", "viewer-button viewer-button-primary", "公式入力画面を開く");
           open.href = quickOrderUrl;
