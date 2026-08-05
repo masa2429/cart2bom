@@ -139,39 +139,48 @@ function createStoreActions(
     if (items.length === 0 || !adapter.createQuickOrderText) continue;
     supportedStoreCount += 1;
     const panel = element(targetDocument, "article", "viewer-store-panel");
+    const guidance = element(
+      targetDocument,
+      "p",
+      "viewer-muted",
+      "Cart2BOM未導入の場合は、入力データをコピーして公式画面へ貼り付けてください。",
+    );
     panel.append(
       element(targetDocument, "h3", undefined, `${adapter.name}（${items.length}商品）`),
-      element(
-        targetDocument,
-        "p",
-        "viewer-muted",
-        "Cart2BOM未導入の場合は、入力データをコピーして公式画面へ貼り付けてください。",
-      ),
+      guidance,
     );
     const actions = element(targetDocument, "div", "viewer-button-row");
+    let hasCombinedAction = false;
     try {
       const batches = exportQuickOrderBatches(selectedList, adapter);
       const quickOrderUrl = adapter.getQuickOrderUrl?.();
-      const supportsSharedAutoFill = (adapter.id === "akizuki" || adapter.id === "misumi") && quickOrderUrl;
-      if (supportsSharedAutoFill) {
+      const supportsSharedAutoFill = Boolean(quickOrderUrl && (adapter.fillQuickOrder || adapter.submitQuickOrder));
+      if (supportsSharedAutoFill && quickOrderUrl) {
+        hasCombinedAction = true;
+        const isMonotaro = adapter.id === "monotaro";
         const proceed = element(
           targetDocument,
           "a",
           "viewer-button viewer-button-primary",
-          "コピーして一括入力へ進む",
+          isMonotaro ? "バスケットへ自動追加" : "コピーして一括入力へ進む",
         );
         proceed.href = createSharedQuickOrderUrl(shareUrl, quickOrderUrl, adapter.id);
         proceed.target = "_blank";
         proceed.rel = "noopener noreferrer";
         proceed.addEventListener("click", () => {
+          if (isMonotaro) {
+            status.textContent = "モノタロウの自動追加画面を開きました。";
+            return;
+          }
           void copyText(targetDocument, batches.join("\n")).then(() => {
             status.textContent = `${adapter.name}の入力データをコピーしました。`;
           }).catch((caught: unknown) => {
             status.textContent = caught instanceof Error ? caught.message : "コピーできませんでした。";
           });
         });
-        panel.querySelector(".viewer-muted")!.textContent =
-          "入力データをコピーして公式画面へ進みます。Cart2BOM導入済みならバスケットへの追加まで自動で進めます。";
+        guidance.textContent = isMonotaro
+          ? "Cart2BOMが10商品ずつクイックオーダーへ入力し、バスケットへの追加まで自動で進めます。"
+          : "入力データをコピーして公式画面へ進みます。Cart2BOM導入済みならバスケットへの追加まで自動で進めます。";
         actions.append(proceed);
       } else {
         batches.forEach((batch, index) => {
@@ -198,7 +207,7 @@ function createStoreActions(
       ));
     }
     const quickOrderUrl = adapter.getQuickOrderUrl?.();
-    if (quickOrderUrl && adapter.id !== "akizuki" && adapter.id !== "misumi") {
+    if (quickOrderUrl && !hasCombinedAction) {
       const open = element(targetDocument, "a", "viewer-button viewer-button-primary", "公式の一括入力画面を開く");
       open.href = quickOrderUrl;
       open.target = "_blank";
@@ -388,7 +397,7 @@ export function renderSharedListPage(
   const primary = element(targetDocument, "div", "viewer-primary");
   const sidebar = element(targetDocument, "aside", "viewer-sidebar");
   primary.append(summaryPanel, controls, listSection);
-  sidebar.append(outputSection, storeActionsSlot);
+  sidebar.append(storeActionsSlot, outputSection);
   contentLayout.append(primary, sidebar);
   main.append(contentLayout);
   root.append(createHeader(targetDocument), main);

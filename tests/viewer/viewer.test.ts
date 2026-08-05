@@ -51,6 +51,8 @@ describe("GitHub Pages viewer", () => {
     expect(document.querySelector(".viewer-content-layout")?.children).toHaveLength(2);
     expect(document.querySelector(".viewer-sidebar")?.textContent).toContain("共有・ファイル出力");
     expect(document.querySelector(".viewer-sidebar")?.textContent).toContain("店舗で注文する");
+    expect(document.querySelector(".viewer-sidebar > :first-child .viewer-section-title")?.textContent)
+      .toBe("店舗で注文する");
     expect(document.querySelector<HTMLImageElement>(".viewer-item-media img")?.referrerPolicy).toBe("no-referrer");
     expect(document.body.textContent).toContain("秋月電子通商（1商品）");
     expect(document.body.textContent).toContain("モノタロウ（1商品）");
@@ -58,6 +60,12 @@ describe("GitHub Pages viewer", () => {
       .find((candidate) => candidate.textContent === "コピーして一括入力へ進む");
     expect(akizukiProceed?.href).toContain("blanketorder.aspx#cart2bom=");
     expect(akizukiProceed?.href).toContain("&action=quick-order&store=akizuki");
+    const monotaroProceed = Array.from(document.querySelectorAll<HTMLAnchorElement>("a"))
+      .find((candidate) => candidate.textContent === "バスケットへ自動追加");
+    expect(monotaroProceed?.href).toContain("www.monotaro.com/quick-order/#cart2bom=");
+    expect(monotaroProceed?.href).toContain("&action=quick-order&store=monotaro");
+    expect(document.body.textContent).not.toContain("一括入力データをコピー");
+    expect(document.body.textContent).not.toContain("公式の一括入力画面を開く");
     const importLink = Array.from(document.querySelectorAll<HTMLAnchorElement>("a"))
       .find((candidate) => candidate.textContent === "Cart2BOMへ取り込む");
     expect(importLink?.href).toContain("akizukidenshi.com/catalog/cart/cart.aspx#cart2bom=j.test");
@@ -78,8 +86,9 @@ describe("GitHub Pages viewer", () => {
     renderSharedListPage(document, root, list, "https://masa2429.github.io/cart2bom/share/#cart2bom=j.test");
     const plain = Array.from(document.querySelectorAll<HTMLButtonElement>("button"))
       .find((candidate) => candidate.textContent === "平文をコピー");
-    const quickOrder = Array.from(document.querySelectorAll<HTMLButtonElement>("button"))
-      .find((candidate) => candidate.textContent === "一括入力データをコピー");
+    const quickOrder = Array.from(document.querySelectorAll<HTMLAnchorElement>("a"))
+      .find((candidate) => candidate.textContent === "コピーして一括入力へ進む");
+    quickOrder?.addEventListener("click", (event) => event.preventDefault(), { capture: true });
     plain?.click();
     quickOrder?.click();
     await vi.waitFor(() => expect(writeText).toHaveBeenCalledTimes(2));
