@@ -1,0 +1,103 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="650" viewBox="0 0 1200 650" role="img" aria-labelledby="title desc">
+  <title id="title">カートをリストへ保存する手順</title>
+  <desc id="desc">Cart2BOMボタンを開き、現在のカートを読み取り、内容を確認して保存する4つの手順</desc>
+  <defs>
+    <style>
+      text { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans JP", sans-serif; fill: #202124; }
+      .step { fill: #1976d2; }
+      .step-text { fill: #fff; font-size: 22px; font-weight: 700; text-anchor: middle; dominant-baseline: middle; }
+      .heading { font-size: 21px; font-weight: 700; }
+      .body { font-size: 16px; fill: #5f6368; }
+      .small { font-size: 13px; fill: #5f6368; }
+      .panel { fill: #fff; stroke: #d6d9dd; stroke-width: 2; }
+      .button { fill: #1976d2; }
+      .button-text { fill: #fff; font-size: 15px; font-weight: 700; text-anchor: middle; dominant-baseline: middle; }
+      .input { fill: #fff; stroke: #9aa0a6; }
+      .line { stroke: #d6d9dd; }
+    </style>
+  </defs>
+  <rect width="1200" height="650" rx="20" fill="#f7f8fa"/>
+  <text x="48" y="56" font-size="28" font-weight="700">カートをリストとして保存する</text>
+
+  <g transform="translate(40 92)">
+    <rect class="panel" width="260" height="500" rx="16"/>
+    <circle class="step" cx="34" cy="34" r="22"/><text class="step-text" x="34" y="35">1</text>
+    <text class="heading" x="68" y="41">カートを開く</text>
+    <rect x="20" y="76" width="220" height="310" rx="9" fill="#f1f3f4"/>
+    <rect x="36" y="98" width="188" height="26" rx="4" fill="#fff"/>
+    <rect x="36" y="142" width="66" height="66" rx="7" fill="#dceaf7"/>
+    <rect x="116" y="148" width="92" height="9" rx="4" fill="#9aa0a6"/>
+    <rect x="116" y="169" width="72" height="8" rx="4" fill="#c5c9ce"/>
+    <rect x="116" y="190" width="46" height="25" rx="4" class="input"/>
+    <rect x="36" y="236" width="66" height="66" rx="7" fill="#e6eadf"/>
+    <rect x="116" y="242" width="92" height="9" rx="4" fill="#9aa0a6"/>
+    <rect x="116" y="263" width="72" height="8" rx="4" fill="#c5c9ce"/>
+    <rect x="116" y="284" width="46" height="25" rx="4" class="input"/>
+    <rect class="button" x="76" y="345" width="150" height="38" rx="19"/>
+    <text class="button-text" x="151" y="365">🛒 Cart2BOM</text>
+    <text class="body" x="20" y="430">対応サイトのカートで</text>
+    <text class="body" x="20" y="454">Cart2BOMを開きます。</text>
+  </g>
+
+  <path d="M312 342h28" stroke="#1976d2" stroke-width="4"/><path d="m334 334 10 8-10 8" fill="none" stroke="#1976d2" stroke-width="4"/>
+
+  <g transform="translate(350 92)">
+    <rect class="panel" width="260" height="500" rx="16"/>
+    <circle class="step" cx="34" cy="34" r="22"/><text class="step-text" x="34" y="35">2</text>
+    <text class="heading" x="68" y="41">読み取りを開始</text>
+    <rect x="20" y="76" width="220" height="310" rx="10" fill="#fff" stroke="#9aa0a6"/>
+    <text x="36" y="108" font-size="20">Cart2BOM</text><text x="215" y="108" font-size="20">×</text>
+    <line class="line" x1="20" y1="126" x2="240" y2="126"/>
+    <text class="small" x="36" y="158">対象サイト：秋月電子通商</text>
+    <rect class="button" x="36" y="174" width="188" height="42" rx="7"/>
+    <text class="button-text" x="130" y="196">現在のカートを読み取る</text>
+    <rect class="input" x="36" y="229" width="188" height="37" rx="7"/><text x="130" y="252" font-size="14" text-anchor="middle">保存済みリスト</text>
+    <rect class="input" x="36" y="278" width="188" height="37" rx="7"/><text x="130" y="301" font-size="14" text-anchor="middle">インポート</text>
+    <rect class="input" x="36" y="327" width="188" height="37" rx="7"/><text x="130" y="350" font-size="14" text-anchor="middle">設定</text>
+    <text class="body" x="20" y="430">「現在のカートを読み取る」</text>
+    <text class="body" x="20" y="454">を押します。</text>
+  </g>
+
+  <path d="M622 342h28" stroke="#1976d2" stroke-width="4"/><path d="m644 334 10 8-10 8" fill="none" stroke="#1976d2" stroke-width="4"/>
+
+  <g transform="translate(660 92)">
+    <rect class="panel" width="260" height="500" rx="16"/>
+    <circle class="step" cx="34" cy="34" r="22"/><text class="step-text" x="34" y="35">3</text>
+    <text class="heading" x="68" y="41">商品を確認</text>
+    <rect x="20" y="76" width="220" height="310" rx="10" fill="#fff" stroke="#9aa0a6"/>
+    <text x="35" y="108" font-size="17" font-weight="700">カート読み取り結果</text>
+    <rect class="input" x="35" y="127" width="190" height="32" rx="5"/><text class="small" x="44" y="148">秋月カート 2026-08-05</text>
+    <rect x="35" y="176" width="190" height="28" fill="#f1f3f4"/>
+    <text class="small" x="43" y="195">選択　商品　数量　金額　備考</text>
+    <rect x="35" y="204" width="190" height="65" fill="#fff" stroke="#d6d9dd"/>
+    <rect x="61" y="215" width="42" height="42" rx="5" fill="#dceaf7"/>
+    <text class="small" x="112" y="228">通販コード 114753</text>
+    <rect class="input" x="112" y="235" width="101" height="23" rx="4"/>
+    <rect x="35" y="269" width="190" height="65" fill="#fff" stroke="#d6d9dd"/>
+    <rect x="61" y="280" width="42" height="42" rx="5" fill="#e6eadf"/>
+    <text class="small" x="112" y="293">通販コード 102719</text>
+    <rect class="input" x="112" y="300" width="101" height="23" rx="4"/>
+    <text class="small" x="35" y="364">合計 2,000円</text>
+    <text class="body" x="20" y="430">保存する商品、数量、金額を</text>
+    <text class="body" x="20" y="454">確認・編集します。</text>
+  </g>
+
+  <path d="M932 342h28" stroke="#1976d2" stroke-width="4"/><path d="m954 334 10 8-10 8" fill="none" stroke="#1976d2" stroke-width="4"/>
+
+  <g transform="translate(970 92)">
+    <rect class="panel" width="190" height="500" rx="16"/>
+    <circle class="step" cx="34" cy="34" r="22"/><text class="step-text" x="34" y="35">4</text>
+    <text class="heading" x="68" y="41">保存</text>
+    <rect x="20" y="76" width="150" height="310" rx="10" fill="#fff" stroke="#9aa0a6"/>
+    <text class="small" x="34" y="112">リスト名</text>
+    <rect class="input" x="34" y="124" width="122" height="35" rx="5"/><text class="small" x="42" y="147">電源部品</text>
+    <text class="small" x="34" y="190">説明</text>
+    <rect class="input" x="34" y="202" width="122" height="35" rx="5"/>
+    <text class="small" x="34" y="268">タグ</text>
+    <rect class="input" x="34" y="280" width="122" height="35" rx="5"/>
+    <rect class="button" x="34" y="330" width="122" height="39" rx="7"/>
+    <text class="button-text" x="95" y="351">リストを保存</text>
+    <text class="body" x="20" y="430">名前を付けて</text>
+    <text class="body" x="20" y="454">保存します。</text>
+  </g>
+</svg>

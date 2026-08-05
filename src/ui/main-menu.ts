@@ -28,9 +28,12 @@ export function openMainMenu(targetDocument: Document, actions: MainMenuActions)
     });
     menu.append(button);
   }
-  const github = createButton(targetDocument, "GitHub（公開先未設定）");
-  github.disabled = true;
-  github.title = "リポジトリの公開URLが決まると有効になります。";
+  const github = targetDocument.createElement("a");
+  github.className = "cart2bom-button cart2bom-button-secondary";
+  github.href = "https://github.com/masa2429/cart2bom";
+  github.target = "_blank";
+  github.rel = "noopener noreferrer";
+  github.textContent = "GitHub";
   menu.append(github);
   modal.content.append(store, menu);
 }

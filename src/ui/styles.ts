@@ -70,6 +70,7 @@ export const CART2BOM_STYLES = `
 .cart2bom-button-primary { border-color: #1769aa; color: #ffffff; background: #1976d2; }
 .cart2bom-button-danger { border-color: #b3261e; color: #b3261e; }
 .cart2bom-menu { display: grid; gap: 10px; }
+.cart2bom-menu a.cart2bom-button { text-align: center; text-decoration: none; }
 .cart2bom-form { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-bottom: 16px; }
 .cart2bom-form label { display: grid; gap: 4px; font-weight: 600; }
 .cart2bom-form input, .cart2bom-table-wrap input { box-sizing: border-box; width: 100%; border: 1px solid #9aa0a6; border-radius: 5px; padding: 7px; color: #202124; background: #ffffff; }

@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="520" viewBox="0 0 1200 520" role="img" aria-labelledby="title desc">
+  <title id="title">保存済みリストの使い方</title>
+  <desc id="desc">保存済みリストから編集、カートへの追加、ファイル出力、管理操作を選ぶ画面</desc>
+  <defs>
+    <style>
+      text { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans JP", sans-serif; fill: #202124; }
+      .panel { fill: #fff; stroke: #d6d9dd; stroke-width: 2; }
+      .primary { fill: #1976d2; stroke: #1769aa; }
+      .secondary { fill: #fff; stroke: #8a9096; }
+      .white { fill: #fff; }
+      .muted { fill: #5f6368; }
+    </style>
+  </defs>
+  <rect width="1200" height="520" rx="20" fill="#f7f8fa"/>
+  <text x="48" y="56" font-size="28" font-weight="700">保存したリストを使う</text>
+
+  <g transform="translate(55 92)">
+    <rect class="panel" width="520" height="365" rx="16"/>
+    <text x="26" y="43" font-size="22" font-weight="700">保存済みリスト</text>
+    <line x1="0" y1="64" x2="520" y2="64" stroke="#d6d9dd"/>
+    <rect x="24" y="88" width="472" height="245" rx="10" fill="#fff" stroke="#d6d9dd"/>
+    <text x="42" y="122" font-size="18" font-weight="700">秋月カート 2026-08-05 15:31</text>
+    <text class="muted" x="42" y="151" font-size="15">12商品・合計 18,420円</text>
+    <rect x="42" y="170" width="52" height="52" rx="6" fill="#dceaf7"/>
+    <rect x="102" y="170" width="52" height="52" rx="6" fill="#e6eadf"/>
+    <rect x="162" y="170" width="52" height="52" rx="6" fill="#f4e4d5"/>
+    <rect class="primary" x="42" y="246" width="70" height="43" rx="7"/>
+    <text class="white" x="77" y="273" text-anchor="middle" font-size="15" font-weight="700">開く</text>
+    <rect class="primary" x="121" y="246" width="145" height="43" rx="7"/>
+    <text class="white" x="194" y="273" text-anchor="middle" font-size="15" font-weight="700">バスケットへ追加</text>
+    <rect class="secondary" x="275" y="246" width="78" height="43" rx="7"/>
+    <text x="314" y="273" text-anchor="middle" font-size="15" font-weight="700">出力⌄</text>
+    <rect class="secondary" x="362" y="246" width="88" height="43" rx="7"/>
+    <text x="406" y="273" text-anchor="middle" font-size="15" font-weight="700">その他⌄</text>
+  </g>
+
+  <path d="M600 267h55" stroke="#1976d2" stroke-width="4"/><path d="m648 258 12 9-12 9" fill="none" stroke="#1976d2" stroke-width="4"/>
+
+  <g transform="translate(690 93)">
+    <rect class="panel" width="455" height="92" rx="12"/>
+    <circle cx="45" cy="46" r="25" fill="#e3f2fd"/><text x="45" y="53" text-anchor="middle" font-size="22">✎</text>
+    <text x="84" y="39" font-size="18" font-weight="700">開く</text>
+    <text class="muted" x="84" y="64" font-size="15">商品、数量、メーカー情報、備考を編集</text>
+
+    <rect class="panel" y="111" width="455" height="92" rx="12"/>
+    <circle cx="45" cy="157" r="25" fill="#e8f5e9"/><text x="45" y="164" text-anchor="middle" font-size="22">🛒</text>
+    <text x="84" y="150" font-size="18" font-weight="700">バスケットへ追加</text>
+    <text class="muted" x="84" y="175" font-size="15">現在の店舗の商品をカートへ復元</text>
+
+    <rect class="panel" y="222" width="455" height="92" rx="12"/>
+    <circle cx="45" cy="268" r="25" fill="#fff3e0"/><text x="45" y="275" text-anchor="middle" font-size="22">⇩</text>
+    <text x="84" y="261" font-size="18" font-weight="700">出力・その他</text>
+    <text class="muted" x="84" y="286" font-size="15">ファイル出力、名前変更、複製、削除</text>
+  </g>
+</svg>
