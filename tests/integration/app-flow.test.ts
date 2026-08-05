@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { CURRENT_SCHEMA_VERSION, STORAGE_KEYS, type SavedList } from "../../src/core/models";
-import { createSharedListUrl } from "../../src/core/share-url";
+import { createSharedListUrl, createSharedQuickOrderUrl } from "../../src/core/share-url";
 import { startCart2BOM } from "../../src/app";
 
 const fixture = readFileSync(resolve("tests/fixtures/akizuki-cart.html"), "utf8");
@@ -168,5 +168,52 @@ describe("Cart2BOM app flow", () => {
       ]);
       expect(window.location.hash).toBe("");
     });
+  });
+
+  it("共有画面から秋月の一括入力指示を受け取りブランケットオーダーを送信する", async () => {
+    const values = new Map<string, unknown>();
+    installMemoryGm(values);
+    const shared: SavedList = {
+      id: "shared-quick-order",
+      schemaVersion: CURRENT_SCHEMA_VERSION,
+      name: "秋月一括入力テスト",
+      description: "",
+      tags: [],
+      items: [{
+        id: "akizuki:105148", storeId: "akizuki", storeName: "秋月電子通商", orderCode: "105148",
+        manufacturerName: null, manufacturerPartNumber: null, name: "共有商品",
+        salesUnit: "1個", quantity: 3, unitPrice: 100, subtotal: 300, currency: "JPY",
+        productUrl: "https://akizukidenshi.com/catalog/g/g105148/", imageUrl: null,
+        stockStatus: null, leadTime: null, note: "", capturedAt: "2026-08-05T00:00:00.000Z",
+      }],
+      createdAt: "2026-08-05T00:00:00.000Z", updatedAt: "2026-08-05T00:00:00.000Z",
+    };
+    const shareUrl = await createSharedListUrl(shared, "https://masa2429.github.io/cart2bom/share/");
+    const actionUrl = createSharedQuickOrderUrl(
+      shareUrl,
+      "https://akizukidenshi.com/catalog/quickorder/blanketorder.aspx",
+      "akizuki",
+    );
+    window.history.replaceState(null, "", actionUrl);
+    document.documentElement.innerHTML = `
+      <html><body><form id="blanketorder_form" action="/catalog/quickorder/blanketorder.aspx">
+        <textarea name="regist_goods"></textarea>
+      </form></body></html>`;
+    const submit = vi.spyOn(HTMLFormElement.prototype, "submit").mockImplementation(() => undefined);
+
+    startCart2BOM();
+
+    await vi.waitFor(() => expect(submit).toHaveBeenCalledTimes(1));
+    const submittedForm = Array.from(document.querySelectorAll("form"))
+      .find((form) => form !== document.getElementById("blanketorder_form"));
+    expect(submittedForm?.querySelector<HTMLTextAreaElement>('textarea[name="regist_goods"]')?.value)
+      .toBe("105148\t3");
+    expect(window.location.hash).toBe("");
+    expect(values.get(STORAGE_KEYS.pendingQuickOrder)).toMatchObject({
+      storeId: "akizuki",
+      phase: "submitted",
+      submittedLineCount: 1,
+    });
+    submit.mockRestore();
   });
 });

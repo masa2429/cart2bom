@@ -6,6 +6,7 @@ import {
   CART2BOM_SHARE_VIEWER_URL,
   createSharedListUrl,
   hasSharedListFragment,
+  readSharedListAction,
   readSharedListUrl,
 } from "./core/share-url";
 import {
@@ -248,23 +249,9 @@ export function startCart2BOM(): void {
   });
 
   const currentUrl = new URL(window.location.href);
-  if (hasSharedListFragment(currentUrl)) {
-    void readSharedListUrl(currentUrl).then((list) => {
-      if (!list) return;
-      openSharedListDialog(document, list, async (sharedList) => {
-        await importList(sharedList);
-        window.history.replaceState(window.history.state, "", `${window.location.pathname}${window.location.search}`);
-      });
-    }).catch((error: unknown) => {
-      showMessage(
-        document,
-        "共有リストを読み込めませんでした",
-        error instanceof Error ? error.message : "共有URLが不正です。",
-      );
-    });
-  }
-  if (adapter.submitQuickOrder) {
-    void readPendingQuickOrder(storage, adapter.id).then(async (pending) => {
+  const processPendingQuickOrder = async (): Promise<void> => {
+    if (adapter.submitQuickOrder) {
+      const pending = await readPendingQuickOrder(storage, adapter.id);
       if (!pending) return;
       const lines = pending.text.split(/\r?\n/).filter((line) => line.trim());
       if (adapter.isCartPage(currentUrl, document) && pending.phase === "submitted") {
@@ -313,11 +300,10 @@ export function startCart2BOM(): void {
           error instanceof Error ? error.message : "クイックオーダーを送信できませんでした。",
         );
       }
-    }).catch((error: unknown) => {
-      console.error("[Cart2BOM] quick order", error);
-    });
-  } else if (adapter.fillQuickOrder && adapter.isQuickOrderPage?.(currentUrl, document)) {
-    void readPendingQuickOrder(storage, adapter.id).then(async (pending) => {
+      return;
+    }
+    if (adapter.fillQuickOrder && adapter.isQuickOrderPage?.(currentUrl, document)) {
+      const pending = await readPendingQuickOrder(storage, adapter.id);
       if (!pending) return;
       try {
         const count = await adapter.fillQuickOrder?.(document, pending.text) ?? 0;
@@ -330,7 +316,41 @@ export function startCart2BOM(): void {
           error instanceof Error ? error.message : "入力欄を確認できませんでした。",
         );
       }
+    }
+  };
+
+  const sharedAction = readSharedListAction(currentUrl);
+  if (hasSharedListFragment(currentUrl)) {
+    void readSharedListUrl(currentUrl).then(async (list) => {
+      if (!list) return;
+      if (sharedAction) {
+        if (sharedAction.storeId !== adapter.id) {
+          throw new Error("共有リストで指定された店舗と、現在のサイトが一致しません。");
+        }
+        const text = exportQuickOrderBatches(list, adapter).join("\n");
+        await savePendingQuickOrder(storage, {
+          storeId: adapter.id,
+          text,
+          createdAt: new Date().toISOString(),
+          phase: "ready",
+        });
+        window.history.replaceState(window.history.state, "", `${window.location.pathname}${window.location.search}`);
+        await processPendingQuickOrder();
+        return;
+      }
+      openSharedListDialog(document, list, async (sharedList) => {
+        await importList(sharedList);
+        window.history.replaceState(window.history.state, "", `${window.location.pathname}${window.location.search}`);
+      });
     }).catch((error: unknown) => {
+      showMessage(
+        document,
+        sharedAction ? "一括入力を開始できませんでした" : "共有リストを読み込めませんでした",
+        error instanceof Error ? error.message : "共有URLが不正です。",
+      );
+    });
+  } else {
+    void processPendingQuickOrder().catch((error: unknown) => {
       console.error("[Cart2BOM] quick order", error);
     });
   }

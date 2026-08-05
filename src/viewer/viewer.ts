@@ -9,6 +9,7 @@ import { exportPlainText } from "../exporters/plain-text";
 import { exportQuickOrderBatches } from "../exporters/quick-order";
 import { exportTsv } from "../exporters/tsv";
 import { createProductImage } from "../ui/product-image";
+import { createSharedQuickOrderUrl } from "../core/share-url";
 
 const INSTALL_URL = "https://raw.githubusercontent.com/masa2429/cart2bom/main/dist/cart2bom.user.js";
 const GITHUB_URL = "https://github.com/masa2429/cart2bom";
@@ -128,6 +129,7 @@ function createStoreActions(
   targetDocument: Document,
   selectedList: SavedList,
   status: HTMLElement,
+  shareUrl: string,
 ): HTMLElement {
   const container = element(targetDocument, "section", "viewer-store-actions");
   container.append(element(targetDocument, "h2", "viewer-section-title", "店舗で注文する"));
@@ -149,20 +151,44 @@ function createStoreActions(
     const actions = element(targetDocument, "div", "viewer-button-row");
     try {
       const batches = exportQuickOrderBatches(selectedList, adapter);
-      batches.forEach((batch, index) => {
-        const copy = button(
+      const quickOrderUrl = adapter.getQuickOrderUrl?.();
+      const supportsSharedAutoFill = (adapter.id === "akizuki" || adapter.id === "misumi") && quickOrderUrl;
+      if (supportsSharedAutoFill) {
+        const proceed = element(
           targetDocument,
-          batches.length === 1 ? "一括入力データをコピー" : `${index + 1}回目の入力データをコピー`,
+          "a",
+          "viewer-button viewer-button-primary",
+          "コピーして一括入力へ進む",
         );
-        copy.addEventListener("click", () => {
-          void copyText(targetDocument, batch).then(() => {
+        proceed.href = createSharedQuickOrderUrl(shareUrl, quickOrderUrl, adapter.id);
+        proceed.target = "_blank";
+        proceed.rel = "noopener noreferrer";
+        proceed.addEventListener("click", () => {
+          void copyText(targetDocument, batches.join("\n")).then(() => {
             status.textContent = `${adapter.name}の入力データをコピーしました。`;
           }).catch((caught: unknown) => {
             status.textContent = caught instanceof Error ? caught.message : "コピーできませんでした。";
           });
         });
-        actions.append(copy);
-      });
+        panel.querySelector(".viewer-muted")!.textContent =
+          "入力データをコピーして公式画面へ進みます。Cart2BOM導入済みならバスケットへの追加まで自動で進めます。";
+        actions.append(proceed);
+      } else {
+        batches.forEach((batch, index) => {
+          const copy = button(
+            targetDocument,
+            batches.length === 1 ? "一括入力データをコピー" : `${index + 1}回目の入力データをコピー`,
+          );
+          copy.addEventListener("click", () => {
+            void copyText(targetDocument, batch).then(() => {
+              status.textContent = `${adapter.name}の入力データをコピーしました。`;
+            }).catch((caught: unknown) => {
+              status.textContent = caught instanceof Error ? caught.message : "コピーできませんでした。";
+            });
+          });
+          actions.append(copy);
+        });
+      }
     } catch (caught) {
       panel.append(element(
         targetDocument,
@@ -172,7 +198,7 @@ function createStoreActions(
       ));
     }
     const quickOrderUrl = adapter.getQuickOrderUrl?.();
-    if (quickOrderUrl) {
+    if (quickOrderUrl && adapter.id !== "akizuki" && adapter.id !== "misumi") {
       const open = element(targetDocument, "a", "viewer-button viewer-button-primary", "公式の一括入力画面を開く");
       open.href = quickOrderUrl;
       open.target = "_blank";
@@ -298,7 +324,7 @@ export function renderSharedListPage(
     }
     const current = selectedList();
     total.textContent = `${current.items.length}/${list.items.length}商品を選択・${formatListTotal(calculateListTotal(current.items))}`;
-    storeActionsSlot.replaceChildren(createStoreActions(targetDocument, current, status));
+    storeActionsSlot.replaceChildren(createStoreActions(targetDocument, current, status, shareUrl));
   };
   list.items.forEach((_, index) => itemsContainer.append(createProductCard(targetDocument, list, index, refresh)));
   selectAll.addEventListener("click", () => {

@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { createSharedListUrl, hasSharedListFragment, readSharedListUrl } from "../../src/core/share-url";
+import {
+  createSharedListUrl,
+  createSharedQuickOrderUrl,
+  hasSharedListFragment,
+  readSharedListAction,
+  readSharedListUrl,
+} from "../../src/core/share-url";
 import { CURRENT_SCHEMA_VERSION, type SavedList } from "../../src/core/models";
 
 const list: SavedList = {
@@ -64,6 +70,21 @@ describe("共有URL", () => {
     const payload = btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
     const url = new URL(`https://akizukidenshi.com/#cart2bom=j.${payload}`);
     expect(await readSharedListUrl(url)).toEqual(list);
+  });
+
+  it("共有データを保ったまま店舗の一括入力指示を付加する", async () => {
+    const shareUrl = await createSharedListUrl(list, "https://masa2429.github.io/cart2bom/share/");
+    const destination = new URL(createSharedQuickOrderUrl(
+      shareUrl,
+      "https://akizukidenshi.com/catalog/quickorder/blanketorder.aspx",
+      "akizuki",
+    ));
+    expect(destination.pathname).toBe("/catalog/quickorder/blanketorder.aspx");
+    expect(readSharedListAction(destination)).toEqual({ type: "quick-order", storeId: "akizuki" });
+    await expect(readSharedListUrl(destination)).resolves.toMatchObject({
+      name: list.name,
+      items: [expect.objectContaining({ orderCode: "105148" })],
+    });
   });
 
   it("通常URLを共有URLとして扱わない", async () => {

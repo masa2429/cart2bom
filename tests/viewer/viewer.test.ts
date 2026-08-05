@@ -54,6 +54,10 @@ describe("GitHub Pages viewer", () => {
     expect(document.querySelector<HTMLImageElement>(".viewer-item-media img")?.referrerPolicy).toBe("no-referrer");
     expect(document.body.textContent).toContain("秋月電子通商（1商品）");
     expect(document.body.textContent).toContain("モノタロウ（1商品）");
+    const akizukiProceed = Array.from(document.querySelectorAll<HTMLAnchorElement>("a"))
+      .find((candidate) => candidate.textContent === "コピーして一括入力へ進む");
+    expect(akizukiProceed?.href).toContain("blanketorder.aspx#cart2bom=");
+    expect(akizukiProceed?.href).toContain("&action=quick-order&store=akizuki");
     const importLink = Array.from(document.querySelectorAll<HTMLAnchorElement>("a"))
       .find((candidate) => candidate.textContent === "Cart2BOMへ取り込む");
     expect(importLink?.href).toContain("akizukidenshi.com/catalog/cart/cart.aspx#cart2bom=j.test");
@@ -81,6 +85,29 @@ describe("GitHub Pages viewer", () => {
     await vi.waitFor(() => expect(writeText).toHaveBeenCalledTimes(2));
     expect(writeText.mock.calls[0]?.[0]).toContain("装置A 電装部品");
     expect(writeText.mock.calls[1]?.[0]).toMatch(/105148\t2|47817527\t3/);
+  });
+
+  it("ミスミもコピーと公式画面への移動を1つのボタンにまとめる", () => {
+    const misumiList: SavedList = {
+      ...list,
+      items: [{
+        ...list.items[0]!,
+        id: "misumi:HNTTBS5-5",
+        storeId: "misumi",
+        storeName: "ミスミ",
+        orderCode: "HNTTBS5-5",
+        manufacturerName: "ミスミ",
+        manufacturerPartNumber: "HNTTBS5-5",
+        name: "後入れロックナット",
+        productUrl: "https://jp.misumi-ec.com/vona2/detail/110302247050/",
+      }],
+    };
+    renderSharedListPage(document, root, misumiList, "https://masa2429.github.io/cart2bom/share/#cart2bom=j.test");
+    const proceed = Array.from(document.querySelectorAll<HTMLAnchorElement>("a"))
+      .find((candidate) => candidate.textContent === "コピーして一括入力へ進む");
+    expect(proceed?.href).toContain("jp.misumi-ec.com/order/part-number/create#cart2bom=j.test");
+    expect(proceed?.href).toContain("&action=quick-order&store=misumi");
+    expect(document.body.textContent).not.toContain("公式の一括入力画面を開く");
   });
 
   it("通常ページと不正URL用の画面を安全に表示する", () => {

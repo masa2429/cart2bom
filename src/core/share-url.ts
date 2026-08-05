@@ -38,6 +38,43 @@ export interface ReadSharedListOptions {
   createId?: () => string;
 }
 
+export interface SharedListAction {
+  type: "quick-order";
+  storeId: string;
+}
+
+function splitSharedFragment(url: URL): { encoded: string; parameters: URLSearchParams } | null {
+  if (!hasSharedListFragment(url)) return null;
+  const fragment = url.hash.slice(SHARED_LIST_FRAGMENT_PREFIX.length);
+  const separator = fragment.indexOf("&");
+  return {
+    encoded: separator < 0 ? fragment : fragment.slice(0, separator),
+    parameters: new URLSearchParams(separator < 0 ? "" : fragment.slice(separator + 1)),
+  };
+}
+
+export function createSharedQuickOrderUrl(
+  shareUrl: string,
+  quickOrderUrl: string,
+  storeId: string,
+): string {
+  if (!/^[a-z0-9-]+$/.test(storeId)) throw new Error("店舗IDが不正です。");
+  const source = new URL(shareUrl);
+  const fragment = splitSharedFragment(source);
+  if (!fragment?.encoded) throw new Error("共有URLが不正です。");
+  const destination = new URL(quickOrderUrl);
+  destination.hash = `${SHARED_LIST_FRAGMENT_PREFIX.slice(1)}${fragment.encoded}&action=quick-order&store=${storeId}`;
+  return destination.href;
+}
+
+export function readSharedListAction(url: URL): SharedListAction | null {
+  const fragment = splitSharedFragment(url);
+  if (!fragment || fragment.parameters.get("action") !== "quick-order") return null;
+  const storeId = fragment.parameters.get("store") ?? "";
+  if (!/^[a-z0-9-]+$/.test(storeId)) return null;
+  return { type: "quick-order", storeId };
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
@@ -179,8 +216,9 @@ export async function readSharedListUrl(
   url: URL,
   options: ReadSharedListOptions = {},
 ): Promise<SavedList | null> {
-  if (!hasSharedListFragment(url)) return null;
-  const encoded = url.hash.slice(SHARED_LIST_FRAGMENT_PREFIX.length);
+  const fragment = splitSharedFragment(url);
+  if (!fragment) return null;
+  const { encoded } = fragment;
   if (encoded.length === 0 || encoded.length > MAX_ENCODED_LENGTH) {
     throw new Error("共有URLのデータ量が不正です。");
   }
