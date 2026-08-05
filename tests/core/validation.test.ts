@@ -12,8 +12,10 @@ const item: CartItem = {
   storeId: "akizuki",
   storeName: "秋月電子通商",
   orderCode: "105148",
+  manufacturerName: null,
   manufacturerPartNumber: null,
   name: "テスト商品",
+  salesUnit: "1セット",
   quantity: 2,
   unitPrice: 100,
   subtotal: 200,
@@ -63,5 +65,19 @@ describe("validation", () => {
 
   it("有効な保存リストを受理する", () => {
     expect(parseSavedListJson(JSON.stringify(list))).toEqual({ ok: true, value: list });
+  });
+
+  it("旧保存データの追加項目欠落をnullとして補完する", () => {
+    const legacyItem = { ...item } as Partial<CartItem>;
+    delete legacyItem.manufacturerName;
+    delete legacyItem.salesUnit;
+    const result = parseSavedListJson(JSON.stringify({ ...list, items: [legacyItem] }));
+    expect(result).toEqual({
+      ok: true,
+      value: {
+        ...list,
+        items: [{ ...item, manufacturerName: null, salesUnit: null }],
+      },
+    });
   });
 });

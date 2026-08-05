@@ -85,6 +85,13 @@ function readMoney(container: Element, selector: string): number | null {
   return element ? parseYen(element.textContent ?? "") : null;
 }
 
+function readSalesUnit(container: Element): string | null {
+  const value = normalizeText(
+    container.querySelector("[data-sales-unit], .block-goods-sales_unit")?.textContent,
+  ).replace(/^[：:]\s*/u, "");
+  return value || null;
+}
+
 function warning(code: string, message: string, itemHint?: string): ExtractionWarning {
   return itemHint ? { code, message, itemHint } : { code, message };
 }
@@ -153,15 +160,22 @@ export class AkizukiAdapter implements StoreAdapter {
       // Current Akizuki cart uses `.item-price`; keep site-specific variants isolated here.
       const unitPrice = readMoney(container, "[data-unit-price], .unit-price, .item-price");
       const displayedSubtotal = readMoney(container, "[data-subtotal], .subtotal");
-      const image = container.querySelector<HTMLImageElement>("img");
+      // Limit the image lookup to product links so compliance and quantity icons are not captured.
+      const image = matchingLinks
+        .map((link) => link.querySelector<HTMLImageElement>("img"))
+        .find((candidate): candidate is HTMLImageElement => candidate !== null);
       const capturedAt = this.now().toISOString();
       items.push({
         id: `${this.id}:${entry.code}`,
         storeId: this.id,
         storeName: this.name,
         orderCode: entry.code,
+        manufacturerName: normalizeText(
+          nameLink?.getAttribute("data-brand") ?? container.getAttribute("data-manufacturer-name"),
+        ) || null,
         manufacturerPartNumber: normalizeText(container.getAttribute("data-manufacturer-part-number")) || null,
         name,
+        salesUnit: readSalesUnit(container),
         quantity,
         unitPrice,
         subtotal: displayedSubtotal ?? (unitPrice === null ? null : unitPrice * quantity),

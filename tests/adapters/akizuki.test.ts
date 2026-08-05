@@ -36,9 +36,13 @@ describe("AkizukiAdapter", () => {
     expect(result.items[0]).toMatchObject({
       orderCode: "105148",
       name: "ブレッドボード用2.1mm標準DCジャックDIP化キット",
+      manufacturerName: "Cart2BOM工業",
+      manufacturerPartNumber: "C2B-105148",
+      salesUnit: "1セット",
       quantity: 2,
       unitPrice: 100,
       subtotal: 200,
+      imageUrl: "https://akizukidenshi.com/images/105148.jpg",
     });
     expect(result.items[1]).toMatchObject({
       orderCode: "131939",

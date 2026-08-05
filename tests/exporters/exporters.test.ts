@@ -4,13 +4,14 @@ import { CURRENT_SCHEMA_VERSION, type CartItem, type SavedList } from "../../src
 import { parseSavedListJson } from "../../src/core/validation";
 import { exportCsv } from "../../src/exporters/csv";
 import { exportJson } from "../../src/exporters/json";
+import { exportMarkdown } from "../../src/exporters/markdown";
 import { exportQuickOrder, QuickOrderValidationError } from "../../src/exporters/quick-order";
 import { exportTsv } from "../../src/exporters/tsv";
 
 const item: CartItem = {
   id: "akizuki:105148", storeId: "akizuki", storeName: "秋月電子通商", orderCode: "105148",
-  manufacturerPartNumber: 'MPN"1', name: "抵抗, 1kΩ\n高精度", quantity: 2, unitPrice: 100,
-  subtotal: 200, currency: "JPY", productUrl: "https://example.test/item", imageUrl: null,
+  manufacturerName: "部品メーカー", manufacturerPartNumber: 'MPN"1', name: "抵抗, 1kΩ\n高精度", salesUnit: "1袋100本入", quantity: 2, unitPrice: 100,
+  subtotal: 200, currency: "JPY", productUrl: "https://example.test/item", imageUrl: "https://example.test/item.jpg",
   stockStatus: null, leadTime: null, note: "A\tB\nC", capturedAt: "2026-08-04T00:00:00.000Z",
 };
 const list: SavedList = {
@@ -21,6 +22,8 @@ const list: SavedList = {
 describe("exporters", () => {
   it("CSVのカンマ、引用符、改行をRFC 4180相当にエスケープする", () => {
     const csv = exportCsv(list);
+    expect(csv).toContain("manufacturerName,manufacturerPartNumber,name,salesUnit");
+    expect(csv).toContain("productUrl,imageUrl,note");
     expect(csv).toContain('"MPN""1"');
     expect(csv).toContain('"抵抗, 1kΩ\n高精度"');
     expect(csv.endsWith("\r\n")).toBe(true);
@@ -34,6 +37,14 @@ describe("exporters", () => {
 
   it("JSONを再インポートできる", () => {
     expect(parseSavedListJson(exportJson(list))).toEqual({ ok: true, value: list });
+  });
+
+  it("Markdownへ画像、メーカー情報、販売単位、合計金額を出力する", () => {
+    const markdown = exportMarkdown(list);
+    expect(markdown).toContain("[画像](https://example.test/item.jpg)");
+    expect(markdown).toContain("部品メーカー");
+    expect(markdown).toContain("1袋100本入");
+    expect(markdown).toContain("**合計 200円**");
   });
 
   it("秋月一括注文で同じ通販コードの数量を合算する", () => {

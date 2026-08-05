@@ -1,6 +1,8 @@
 import type { CartItem, SavedList } from "../core/models";
+import { calculateListTotal, formatListTotal } from "../core/totals";
 import { validateQuantity } from "../core/validation";
 import { createButton, openModal } from "./modal";
+import { createProductImage } from "./product-image";
 
 export interface CartEditorValue {
   name: string;
@@ -53,7 +55,7 @@ export function openCartEditor(targetDocument: Document, options: CartEditorOpti
   const table = targetDocument.createElement("table");
   const thead = targetDocument.createElement("thead");
   const headerRow = targetDocument.createElement("tr");
-  for (const heading of ["選択", "通販コード", "商品名", "数量", "単価", "小計", "メーカー型番", "備考", "商品ページ", "削除"]) {
+  for (const heading of ["選択", "画像", "通販コード", "商品名", "メーカー名", "メーカー型番", "販売単位", "数量", "単価", "小計", "備考", "商品ページ", "削除"]) {
     const th = targetDocument.createElement("th");
     th.textContent = heading;
     headerRow.append(th);
@@ -62,20 +64,25 @@ export function openCartEditor(targetDocument: Document, options: CartEditorOpti
   const tbody = targetDocument.createElement("tbody");
   const records: Array<{
     source: CartItem; selected: HTMLInputElement; name: HTMLInputElement; quantity: HTMLInputElement;
-    mpn: HTMLInputElement; note: HTMLInputElement; row: HTMLTableRowElement;
+    manufacturer: HTMLInputElement; mpn: HTMLInputElement; salesUnit: HTMLInputElement;
+    note: HTMLInputElement; row: HTMLTableRowElement;
   }> = [];
+  let refreshTotal = (): void => undefined;
 
   for (const item of options.items) {
     const row = targetDocument.createElement("tr");
     const selected = input(targetDocument, "", `${item.orderCode}を選択`);
     selected.type = "checkbox";
     selected.checked = true;
+    const image: Node = createProductImage(targetDocument, item) ?? targetDocument.createTextNode("—");
     const itemName = input(targetDocument, item.name, `${item.orderCode}の商品名`);
+    const manufacturer = input(targetDocument, item.manufacturerName ?? "", `${item.orderCode}のメーカー名`);
+    const mpn = input(targetDocument, item.manufacturerPartNumber ?? "", `${item.orderCode}のメーカー型番`);
+    const salesUnit = input(targetDocument, item.salesUnit ?? "", `${item.orderCode}の販売単位`);
     const quantity = input(targetDocument, String(item.quantity), `${item.orderCode}の数量`);
     quantity.type = "number";
     quantity.min = "1";
     quantity.step = "1";
-    const mpn = input(targetDocument, item.manufacturerPartNumber ?? "", `${item.orderCode}のメーカー型番`);
     const note = input(targetDocument, item.note, `${item.orderCode}の備考`);
     const link = targetDocument.createElement("a");
     link.href = item.productUrl;
@@ -84,22 +91,46 @@ export function openCartEditor(targetDocument: Document, options: CartEditorOpti
     link.textContent = "開く";
     const remove = createButton(targetDocument, "削除", "danger");
     const values: Array<Node> = [
-      selected, targetDocument.createTextNode(item.orderCode), itemName, quantity,
+      selected, image, targetDocument.createTextNode(item.orderCode), itemName,
+      manufacturer, mpn, salesUnit, quantity,
       targetDocument.createTextNode(item.unitPrice?.toLocaleString("ja-JP") ?? "—"),
       targetDocument.createTextNode(item.subtotal?.toLocaleString("ja-JP") ?? "—"),
-      mpn, note, link, remove,
+      note, link, remove,
     ];
     for (const value of values) {
       const cell = targetDocument.createElement("td");
       cell.append(value);
       row.append(cell);
     }
-    remove.addEventListener("click", () => row.remove());
-    records.push({ source: item, selected, name: itemName, quantity, mpn, note, row });
+    remove.addEventListener("click", () => { row.remove(); refreshTotal(); });
+    records.push({ source: item, selected, name: itemName, quantity, manufacturer, mpn, salesUnit, note, row });
     tbody.append(row);
   }
   table.append(thead, tbody);
   tableWrap.append(table);
+
+  const total = targetDocument.createElement("p");
+  total.className = "cart2bom-list-total";
+  refreshTotal = () => {
+    const selectedItems = records.flatMap((record) => {
+      if (!record.row.parentElement || !record.selected.checked) return [];
+      const quantity = Number(record.quantity.value);
+      if (!validateQuantity(quantity)) return [];
+      return [{
+        ...record.source,
+        quantity,
+        subtotal: record.source.unitPrice === null
+          ? record.source.subtotal
+          : record.source.unitPrice * quantity,
+      }];
+    });
+    total.textContent = formatListTotal(calculateListTotal(selectedItems));
+  };
+  for (const record of records) {
+    record.selected.addEventListener("change", refreshTotal);
+    record.quantity.addEventListener("input", refreshTotal);
+  }
+  refreshTotal();
 
   const error = targetDocument.createElement("p");
   error.className = "cart2bom-error";
@@ -131,8 +162,10 @@ export function openCartEditor(targetDocument: Document, options: CartEditorOpti
       items.push({
         ...record.source,
         name: record.name.value.trim(),
+        manufacturerName: record.manufacturer.value.trim() || null,
         quantity: parsedQuantity,
         manufacturerPartNumber: record.mpn.value.trim() || null,
+        salesUnit: record.salesUnit.value.trim() || null,
         note: record.note.value,
         subtotal: record.source.unitPrice === null ? record.source.subtotal : record.source.unitPrice * parsedQuantity,
       });
@@ -157,5 +190,5 @@ export function openCartEditor(targetDocument: Document, options: CartEditorOpti
     }
   });
   actions.append(save, cancel);
-  modal.content.append(form, tableWrap, error, actions);
+  modal.content.append(form, tableWrap, total, error, actions);
 }

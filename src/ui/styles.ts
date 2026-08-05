@@ -83,6 +83,9 @@ export const CART2BOM_STYLES = `
 .cart2bom-list-grid { display: grid; gap: 12px; }
 .cart2bom-list-card { border: 1px solid #dadce0; border-radius: 8px; padding: 14px; }
 .cart2bom-list-card h3, .cart2bom-list-card p { margin: 0 0 6px; }
+.cart2bom-list-total { margin: 10px 0 0; text-align: right; font-size: 16px; font-weight: 700; }
+.cart2bom-list-images { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.cart2bom-product-image { display: block; width: 64px; height: 64px; border: 1px solid #dadce0; border-radius: 6px; background: #ffffff; object-fit: contain; }
 .cart2bom-toast { position: fixed; right: 20px; bottom: 78px; z-index: 2147483002; max-width: min(420px, calc(100vw - 40px)); border-radius: 8px; padding: 12px 16px; color: #ffffff; background: #303134; box-shadow: 0 5px 18px rgba(0, 0, 0, 0.32); font: 14px/1.5 system-ui, sans-serif; }
 .cart2bom-import-text { display: block; box-sizing: border-box; width: 100%; min-height: 240px; margin-top: 12px; border: 1px solid #9aa0a6; border-radius: 6px; padding: 10px; color: #202124; background: #ffffff; font: 13px/1.5 ui-monospace, monospace; resize: vertical; }
 .cart2bom-settings-form select { box-sizing: border-box; width: 100%; border: 1px solid #9aa0a6; border-radius: 5px; padding: 7px; color: #202124; background: #ffffff; }

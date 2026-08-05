@@ -7,7 +7,7 @@ import { MemoryStorageProvider } from "../../src/storage/memory-storage";
 
 const item: CartItem = {
   id: "akizuki:105148", storeId: "akizuki", storeName: "秋月電子通商",
-  orderCode: "105148", manufacturerPartNumber: null, name: "商品", quantity: 1,
+  orderCode: "105148", manufacturerName: null, manufacturerPartNumber: null, name: "商品", salesUnit: "1個", quantity: 1,
   unitPrice: null, subtotal: null, currency: "JPY", productUrl: "https://example.test/item",
   imageUrl: null, stockStatus: null, leadTime: null, note: "", capturedAt: "2026-08-04T00:00:00.000Z",
 };

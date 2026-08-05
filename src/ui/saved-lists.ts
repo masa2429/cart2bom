@@ -1,5 +1,7 @@
 import type { SavedList } from "../core/models";
+import { calculateListTotal, formatListTotal } from "../core/totals";
 import { createButton, openModal } from "./modal";
+import { createProductImage } from "./product-image";
 
 export interface SavedListActions {
   confirmBeforeDelete: boolean;
@@ -35,7 +37,16 @@ export function openSavedLists(
     const title = targetDocument.createElement("h3");
     title.textContent = list.name;
     const meta = targetDocument.createElement("p");
-    meta.textContent = `${list.items.length}商品・更新 ${new Date(list.updatedAt).toLocaleString("ja-JP")}`;
+    meta.textContent = `${list.items.length}商品・${formatListTotal(calculateListTotal(list.items))}・更新 ${new Date(list.updatedAt).toLocaleString("ja-JP")}`;
+    const images = targetDocument.createElement("div");
+    images.className = "cart2bom-list-images";
+    for (const item of list.items) {
+      if (images.childElementCount >= 6) break;
+      const image = createProductImage(targetDocument, item);
+      if (!image) continue;
+      image.title = item.name;
+      images.append(image);
+    }
     const buttons = targetDocument.createElement("div");
     buttons.className = "cart2bom-actions";
     const open = createButton(targetDocument, "開く", "primary");
@@ -80,7 +91,9 @@ export function openSavedLists(
     });
     buttons.prepend(open, defaultExport, rename, duplicate);
     buttons.append(quickCopy, quickOpen, remove);
-    card.append(title, meta, buttons);
+    card.append(title, meta);
+    if (images.childElementCount > 0) card.append(images);
+    card.append(buttons);
     container.append(card);
   }
   modal.content.append(status, container);

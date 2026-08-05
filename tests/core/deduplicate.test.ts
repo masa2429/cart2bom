@@ -4,7 +4,7 @@ import type { CartItem } from "../../src/core/models";
 
 const item: CartItem = {
   id: "akizuki:105148", storeId: "akizuki", storeName: "秋月電子通商", orderCode: "105148",
-  manufacturerPartNumber: null, name: "商品", quantity: 1, unitPrice: 100, subtotal: 100,
+  manufacturerName: null, manufacturerPartNumber: null, name: "商品", salesUnit: "1個", quantity: 1, unitPrice: 100, subtotal: 100,
   currency: "JPY", productUrl: "https://example.test/item", imageUrl: null, stockStatus: null,
   leadTime: null, note: "最初", capturedAt: "2026-08-04T00:00:00.000Z",
 };

@@ -5,8 +5,10 @@ export interface CartItem {
   storeId: string;
   storeName: string;
   orderCode: string;
+  manufacturerName: string | null;
   manufacturerPartNumber: string | null;
   name: string;
+  salesUnit: string | null;
   quantity: number;
   unitPrice: number | null;
   subtotal: number | null;

@@ -22,6 +22,10 @@ function isNullableString(value: unknown): value is string | null {
   return typeof value === "string" || value === null;
 }
 
+function isOptionalNullableString(value: unknown): value is string | null | undefined {
+  return value === undefined || isNullableString(value);
+}
+
 function isNullableNonNegativeInteger(value: unknown): value is number | null {
   return (
     value === null ||
@@ -81,6 +85,12 @@ export function validateCartItem(
       issues.push({ path: `${path}.${key}`, message: "文字列またはnullが必要です。" });
     }
   }
+  // These additive fields are optional when reading schema v1 data saved by Cart2BOM 0.1.0.
+  for (const key of ["manufacturerName", "salesUnit"] as const) {
+    if (!isOptionalNullableString(value[key])) {
+      issues.push({ path: `${path}.${key}`, message: "文字列またはnullが必要です。" });
+    }
+  }
   for (const key of ["unitPrice", "subtotal"] as const) {
     if (!isNullableNonNegativeInteger(value[key])) {
       issues.push({ path: `${path}.${key}`, message: "0以上の整数またはnullが必要です。" });
@@ -93,9 +103,15 @@ export function validateCartItem(
     issues.push({ path: `${path}.capturedAt`, message: "ISO 8601日時が必要です。" });
   }
 
-  return issues.length > 0
-    ? { ok: false, issues }
-    : { ok: true, value: value as unknown as CartItem };
+  if (issues.length > 0) return { ok: false, issues };
+  return {
+    ok: true,
+    value: {
+      ...(value as unknown as CartItem),
+      manufacturerName: typeof value.manufacturerName === "string" ? value.manufacturerName : null,
+      salesUnit: typeof value.salesUnit === "string" ? value.salesUnit : null,
+    },
+  };
 }
 
 /** Validates a complete saved list and rejects unknown schema versions. */
@@ -121,18 +137,19 @@ export function validateSavedList(value: unknown): ValidationResult<SavedList> {
   if (!Array.isArray(value.tags) || !value.tags.every((tag) => typeof tag === "string")) {
     issues.push({ path: "tags", message: "文字列の配列が必要です。" });
   }
+  const items: CartItem[] = [];
   if (!Array.isArray(value.items)) {
     issues.push({ path: "items", message: "商品の配列が必要です。" });
   } else {
     value.items.forEach((item, index) => {
       const result = validateCartItem(item, `items[${index}]`);
       if (!result.ok) issues.push(...result.issues);
+      else items.push(result.value);
     });
   }
 
-  return issues.length > 0
-    ? { ok: false, issues }
-    : { ok: true, value: value as unknown as SavedList };
+  if (issues.length > 0) return { ok: false, issues };
+  return { ok: true, value: { ...(value as unknown as SavedList), items } };
 }
 
 export function parseSavedListJson(text: string): ValidationResult<SavedList> {

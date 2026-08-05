@@ -196,7 +196,9 @@ AkiBoostはUIと利用方法の参考にとどめる．ライセンスが明確�
 | `storeId` | 必須 | `akizuki` |
 | `storeName` | 必須 | 秋月電子通商 |
 | `orderCode` | 必須 | 6桁の通販コード |
+| `manufacturerName` | 任意 | メーカー名 |
 | `name` | 必須 | 商品名 |
+| `salesUnit` | 任意 | `1個`、`1袋100本入`などの販売単位 |
 | `quantity` | 必須 | カート内数量 |
 | `unitPrice` | 任意 | 単価 |
 | `subtotal` | 任意 | 小計 |
@@ -219,6 +221,10 @@ AkiBoostはUIと利用方法の参考にとどめる．ライセンスが明確�
 - 選択
 - 通販コード
 - 商品名
+- 商品画像
+- メーカー名
+- メーカー型番
+- 販売単位
 - 数量
 - 単価
 - 小計
@@ -229,7 +235,9 @@ AkiBoostはUIと利用方法の参考にとどめる．ライセンスが明確�
 
 - 数量
 - 商品名
+- メーカー名
 - メーカー型番
+- 販売単位
 - 備考
 - 行の削除
 
@@ -273,7 +281,7 @@ AkiBoostはUIと利用方法の参考にとどめる．ライセンスが明確�
 列順は次のとおりとする．
 
 ```text
-store,orderCode,manufacturerPartNumber,name,quantity,unitPrice,subtotal,currency,productUrl,note,capturedAt
+store,orderCode,manufacturerName,manufacturerPartNumber,name,salesUnit,quantity,unitPrice,subtotal,currency,productUrl,imageUrl,note,capturedAt
 ```
 
 CSVはRFC 4180相当のエスケープを行う．改行，カンマ，ダブルクォートを含む値は正しく引用する．文字コードはUTF-8，改行はCRLFを基本とする．
@@ -378,8 +386,10 @@ export interface CartItem {
   storeId: string;
   storeName: string;
   orderCode: string;
+  manufacturerName: string | null;
   manufacturerPartNumber: string | null;
   name: string;
+  salesUnit: string | null;
   quantity: number;
   unitPrice: number | null;
   subtotal: number | null;
@@ -400,6 +410,8 @@ export interface CartItem {
 ```
 
 同じ通販コードで仕様違いが存在するサイトでは，アダプターが識別用情報を追加できるようにする．
+
+リストの合計金額は保存値として重複保持せず、各商品の`subtotal`、または`unitPrice × quantity`から表示時に算出する。価格不明の商品がある場合は、その商品数を合計と併記する．
 
 ### 10.2．保存リスト
 
