@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { MonotaroAdapter, parseMonotaroYen } from "../../src/adapters/monotaro";
 
 const fixture = readFileSync(resolve("tests/fixtures/monotaro-cart.html"), "utf8");
@@ -78,9 +78,9 @@ describe("MonotaroAdapter", () => {
     });
   });
 
-  it("クイックオーダーの注文コードと数量を順番に入力し、送信しない", async () => {
+  it("クイックオーダーをサイト標準の送信先へ一括送信する", () => {
     document.body.innerHTML = `
-      <form>
+      <form action="/monotaroMain.py" method="POST">
         <table><tbody>
           <tr><td></td><td><input aria-label="注文コード" name="q0"></td><td><input aria-label="数量" name="p0"></td><td>商品1</td></tr>
           <tr><td></td><td><input aria-label="注文コード" name="q1"></td><td><input aria-label="数量" name="p1"></td><td>商品2</td></tr>
@@ -88,33 +88,26 @@ describe("MonotaroAdapter", () => {
         </tbody></table>
         <button type="submit">バスケットに入れる</button>
       </form>`;
-    const form = document.querySelector("form");
-    const submit = document.querySelector("button");
-    const submitted = { value: false };
-    const changedNames: string[] = [];
-    form?.addEventListener("submit", (event) => { event.preventDefault(); submitted.value = true; });
-    form?.addEventListener("change", (event) => {
-      if (event.target instanceof HTMLInputElement) changedNames.push(event.target.name);
+    const submit = vi.spyOn(HTMLFormElement.prototype, "submit").mockImplementation(function (this: HTMLFormElement) {
+      expect(new URL(this.action).pathname).toBe("/monotaroMain.py");
+      expect(new FormData(this).get("func")).toBe("monotaro.quickOrder.insertMultiServlet.InsertMultiServlet");
+      expect(new FormData(this).get("q0")).toBe("47817527");
+      expect(new FormData(this).get("p0")).toBe("2");
+      expect(new FormData(this).get("q1")).toBe("42107457");
+      expect(new FormData(this).get("p1")).toBe("10");
+      expect(new FormData(this).get("q9")).toBe("");
     });
 
-    const count = await new MonotaroAdapter().fillQuickOrder(document, "47817527\t2\n42107457\t10");
+    const count = new MonotaroAdapter().submitQuickOrder(document, "47817527\t2\n42107457\t10");
 
     expect(count).toBe(2);
-    expect(document.querySelector<HTMLInputElement>('input[name="q0"]')?.value).toBe("47817527");
-    expect(document.querySelector<HTMLInputElement>('input[name="p0"]')?.value).toBe("2");
-    expect(document.querySelector<HTMLInputElement>('input[name="q1"]')?.value).toBe("42107457");
-    expect(document.querySelector<HTMLInputElement>('input[name="p1"]')?.value).toBe("10");
-    expect(changedNames).toEqual(["q0", "q1", "p0", "p1"]);
-    expect(submitted.value).toBe(false);
-    expect(submit).not.toBeNull();
+    expect(submit).toHaveBeenCalledOnce();
   });
 
-  it("入力済みのクイックオーダー画面を上書きしない", async () => {
-    document.body.innerHTML = `
-      <input aria-label="注文コード" name="q0" value="47817527">
-      <input aria-label="数量" name="p0" value="1">`;
+  it("クイックオーダー画面以外では送信しない", () => {
+    document.body.innerHTML = "<p>別の画面</p>";
 
-    await expect(new MonotaroAdapter().fillQuickOrder(document, "42107457\t10"))
-      .rejects.toThrow("入力済みの行があります");
+    expect(() => new MonotaroAdapter().submitQuickOrder(document, "42107457\t10"))
+      .toThrow("入力欄を確認できませんでした");
   });
 });

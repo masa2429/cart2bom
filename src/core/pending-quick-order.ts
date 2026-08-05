@@ -5,6 +5,8 @@ export interface PendingQuickOrder {
   storeId: string;
   text: string;
   createdAt: string;
+  phase?: "ready" | "submitted";
+  submittedLineCount?: number;
 }
 
 const MAX_AGE_MS = 5 * 60 * 1000;
@@ -16,8 +18,8 @@ export async function savePendingQuickOrder(
   await storage.set(STORAGE_KEYS.pendingQuickOrder, value);
 }
 
-/** Returns and removes a recent pending order for this store. */
-export async function consumePendingQuickOrder(
+/** Returns a recent pending order without removing it. */
+export async function readPendingQuickOrder(
   storage: StorageProvider,
   storeId: string,
   now = new Date(),
@@ -33,10 +35,28 @@ export async function consumePendingQuickOrder(
     || !Number.isFinite(createdAt)
     || now.getTime() - createdAt > MAX_AGE_MS
     || createdAt - now.getTime() > MAX_AGE_MS
+    || (candidate.phase !== undefined && candidate.phase !== "ready" && candidate.phase !== "submitted")
+    || (candidate.submittedLineCount !== undefined
+      && (!Number.isInteger(candidate.submittedLineCount) || candidate.submittedLineCount < 1))
   ) {
     await storage.remove(STORAGE_KEYS.pendingQuickOrder);
     return null;
   }
-  await storage.remove(STORAGE_KEYS.pendingQuickOrder);
   return candidate as PendingQuickOrder;
+}
+
+export async function removePendingQuickOrder(storage: StorageProvider): Promise<void> {
+  await storage.remove(STORAGE_KEYS.pendingQuickOrder);
+}
+
+/** Returns and removes a recent pending order for this store. */
+export async function consumePendingQuickOrder(
+  storage: StorageProvider,
+  storeId: string,
+  now = new Date(),
+): Promise<PendingQuickOrder | null> {
+  const candidate = await readPendingQuickOrder(storage, storeId, now);
+  if (!candidate) return null;
+  await storage.remove(STORAGE_KEYS.pendingQuickOrder);
+  return candidate;
 }

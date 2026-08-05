@@ -8,6 +8,7 @@ export interface SavedListActions {
   quickOrderAvailable?: boolean;
   quickOrderLabel?: string;
   quickOrderAutoFill?: boolean;
+  quickOrderAutoSubmit?: boolean;
   onOpen(list: SavedList): void;
   onDuplicate(list: SavedList): Promise<void>;
   onRename(list: SavedList, name: string): Promise<void>;
@@ -89,7 +90,9 @@ export function openSavedLists(
     });
     const quickOpen = createButton(
       targetDocument,
-      actions.quickOrderAutoFill
+      actions.quickOrderAutoSubmit
+        ? `${quickOrderLabel}からバスケットへ自動追加`
+        : actions.quickOrderAutoFill
         ? `${quickOrderLabel}画面へ入力`
         : `${quickOrderLabel}画面を開く`,
     );

@@ -101,6 +101,25 @@ describe("openSavedLists", () => {
     expect(document.body.textContent).toContain("モノタロウクイックオーダー画面へ入力");
   });
 
+  it("自動送信対応店舗ではバスケットへの自動追加を明示する", () => {
+    openSavedLists(document, [list], {
+      confirmBeforeDelete: true,
+      quickOrderAvailable: true,
+      quickOrderLabel: "モノタロウクイックオーダー",
+      quickOrderAutoSubmit: true,
+      onOpen: vi.fn(),
+      onDuplicate: vi.fn(async () => undefined),
+      onRename: vi.fn(async () => undefined),
+      onDelete: vi.fn(async () => undefined),
+      onExport: vi.fn(),
+      onCopyQuickOrder: vi.fn(async () => undefined),
+      onOpenQuickOrder: vi.fn(async () => undefined),
+      onDefaultExport: vi.fn(),
+    });
+
+    expect(document.body.textContent).toContain("モノタロウクイックオーダーからバスケットへ自動追加");
+  });
+
   it("現在の店舗の商品を含むリストだけへ絞り込む", () => {
     const monotaroList: SavedList = {
       ...list,

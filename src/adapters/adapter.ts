@@ -28,4 +28,5 @@ export interface StoreAdapter {
   getQuickOrderUrl?(): string | null;
   isQuickOrderPage?(url: URL, document: Document): boolean;
   fillQuickOrder?(document: Document, text: string): number | Promise<number>;
+  submitQuickOrder?(document: Document, text: string): number;
 }

@@ -2,7 +2,11 @@ import { findAdapter } from "./adapters/registry";
 import { DuplicateListNameError, StorageDataError } from "./core/errors";
 import { ListService } from "./core/list-service";
 import { DEFAULT_SETTINGS, type AppSettings, type SavedList } from "./core/models";
-import { consumePendingQuickOrder, savePendingQuickOrder } from "./core/pending-quick-order";
+import {
+  readPendingQuickOrder,
+  removePendingQuickOrder,
+  savePendingQuickOrder,
+} from "./core/pending-quick-order";
 import { SettingsService } from "./core/settings-service";
 import { exportCsv } from "./exporters/csv";
 import { copyText, downloadText, safeFileName } from "./exporters/download";
@@ -71,6 +75,7 @@ export function startCart2BOM(): void {
         quickOrderAvailable: typeof adapter.createQuickOrderText === "function",
         quickOrderLabel: adapter.quickOrderName ?? "クイックオーダー",
         quickOrderAutoFill: typeof adapter.fillQuickOrder === "function",
+        quickOrderAutoSubmit: typeof adapter.submitQuickOrder === "function",
         onOpen: openExisting,
         onDuplicate: async (list) => {
           await listService.duplicate(list.id);
@@ -102,35 +107,25 @@ export function startCart2BOM(): void {
         },
         onOpenQuickOrder: async (list) => {
           const batches = exportQuickOrderBatches(list, adapter);
-          let batchIndex = 0;
-          if (batches.length > 1) {
-            const selected = window.prompt(
-              `このリストは${batches.length}回に分けて入力します。入力する回を1～${batches.length}で指定してください。`,
-              "1",
-            );
-            if (selected === null) return;
-            const parsed = Number(selected);
-            if (!Number.isInteger(parsed) || parsed < 1 || parsed > batches.length) {
-              throw new Error(`入力する回は1～${batches.length}の整数で指定してください。`);
-            }
-            batchIndex = parsed - 1;
-          }
-          const text = batches[batchIndex];
+          const text = batches.join("\n");
           if (!text) throw new Error("クイックオーダーへ入力する商品がありません。");
           await copyText(document, text);
           const quickOrderUrl = adapter.getQuickOrderUrl?.();
           if (!quickOrderUrl) throw new Error("一括注文ページが設定されていません。");
-          if (adapter.fillQuickOrder) {
+          if (adapter.fillQuickOrder || adapter.submitQuickOrder) {
             await savePendingQuickOrder(storage, {
               storeId: adapter.id,
               text,
               createdAt: new Date().toISOString(),
+              phase: "ready",
             });
           }
           window.open(quickOrderUrl, "_blank", "noopener");
           showToast(
             document,
-            adapter.fillQuickOrder
+            adapter.submitQuickOrder
+              ? `${batches.length}回に分けてバスケットへ自動追加します。`
+              : adapter.fillQuickOrder
               ? "クイックオーダー画面を開き、入力内容を準備しました。"
               : "一括注文テキストをコピーしました。",
           );
@@ -241,14 +236,67 @@ export function startCart2BOM(): void {
   });
 
   const currentUrl = new URL(window.location.href);
-  if (adapter.fillQuickOrder && adapter.isQuickOrderPage?.(currentUrl, document)) {
-    void consumePendingQuickOrder(storage, adapter.id).then(async (pending) => {
+  if (adapter.submitQuickOrder) {
+    void readPendingQuickOrder(storage, adapter.id).then(async (pending) => {
+      if (!pending) return;
+      const lines = pending.text.split(/\r?\n/).filter((line) => line.trim());
+      if (adapter.isCartPage(currentUrl, document) && pending.phase === "submitted") {
+        const remaining = lines.slice(pending.submittedLineCount ?? 0);
+        if (remaining.length === 0) {
+          await removePendingQuickOrder(storage);
+          showToast(document, "保存リストの商品をバスケットへ追加しました。内容を確認してください。");
+          return;
+        }
+        await savePendingQuickOrder(storage, {
+          storeId: pending.storeId,
+          text: remaining.join("\n"),
+          createdAt: new Date().toISOString(),
+          phase: "ready",
+        });
+        const quickOrderUrl = adapter.getQuickOrderUrl?.();
+        if (quickOrderUrl) window.location.replace(quickOrderUrl);
+        return;
+      }
+      const isQuickOrderPage = adapter.isQuickOrderPage?.(currentUrl, document) ?? false;
+      if (pending.phase === "submitted" && !isQuickOrderPage) {
+        const { submittedLineCount: _submittedLineCount, ...retry } = pending;
+        await savePendingQuickOrder(storage, { ...retry, phase: "ready" });
+        showMessage(
+          document,
+          "バスケットへの自動追加を中断しました",
+          "モノタロウがバスケット画面へ移動しませんでした。画面のエラー内容を確認してください。",
+        );
+        return;
+      }
+      if (!isQuickOrderPage || pending.phase === "submitted") return;
+      const batch = lines.slice(0, adapter.quickOrderCapacity ?? lines.length);
+      try {
+        await savePendingQuickOrder(storage, {
+          ...pending,
+          phase: "submitted",
+          submittedLineCount: batch.length,
+        });
+        adapter.submitQuickOrder?.(document, batch.join("\n"));
+      } catch (error) {
+        const { submittedLineCount: _submittedLineCount, ...retry } = pending;
+        await savePendingQuickOrder(storage, { ...retry, phase: "ready" });
+        showMessage(
+          document,
+          "バスケットへ自動追加できませんでした",
+          error instanceof Error ? error.message : "クイックオーダーを送信できませんでした。",
+        );
+      }
+    }).catch((error: unknown) => {
+      console.error("[Cart2BOM] quick order", error);
+    });
+  } else if (adapter.fillQuickOrder && adapter.isQuickOrderPage?.(currentUrl, document)) {
+    void readPendingQuickOrder(storage, adapter.id).then(async (pending) => {
       if (!pending) return;
       try {
         const count = await adapter.fillQuickOrder?.(document, pending.text) ?? 0;
+        await removePendingQuickOrder(storage);
         showToast(document, `${count}商品をクイックオーダーへ入力しました。内容を確認してください。`);
       } catch (error) {
-        await savePendingQuickOrder(storage, pending);
         showMessage(
           document,
           "クイックオーダーへ入力できませんでした",
