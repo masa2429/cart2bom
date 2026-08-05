@@ -1,0 +1,68 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+import { beforeEach, describe, expect, it } from "vitest";
+import { AkizukiAdapter, extractAkizukiOrderCode, parseYen } from "../../src/adapters/akizuki";
+
+const fixture = readFileSync(resolve("tests/fixtures/akizuki-cart.html"), "utf8");
+
+describe("AkizukiAdapter", () => {
+  beforeEach(() => {
+    document.documentElement.innerHTML = fixture;
+  });
+
+  it("www有無を判定し、カートページだけを識別する", () => {
+    const adapter = new AkizukiAdapter();
+    expect(adapter.matches(new URL("https://www.akizukidenshi.com/"))).toBe(true);
+    expect(adapter.isCartPage(new URL("https://akizukidenshi.com/catalog/cart/cart.aspx"), document)).toBe(true);
+    expect(adapter.isCartPage(new URL("https://akizukidenshi.com/catalog/g/g105148/"), document)).toBe(false);
+  });
+
+  it("商品URLから6桁の通販コードを取得する", () => {
+    expect(extractAkizukiOrderCode("https://akizukidenshi.com/catalog/g/g105148/?x=1")).toBe("105148");
+    expect(extractAkizukiOrderCode("https://akizukidenshi.com/catalog/g/g12345/")).toBeNull();
+  });
+
+  it("円表記を整数へ変換する", () => {
+    expect(parseYen("￥1,200 円")).toBe(1200);
+    expect(parseYen("価格未定")).toBeNull();
+  });
+
+  it("数量、商品名、価格を抽出し、複数リンクを二重計上しない", () => {
+    const adapter = new AkizukiAdapter(() => new Date("2026-08-04T00:00:00.000Z"));
+    const result = adapter.extractCart(document);
+
+    expect(result.detectedCount).toBe(3);
+    expect(result.items).toHaveLength(2);
+    expect(result.items[0]).toMatchObject({
+      orderCode: "105148",
+      name: "ブレッドボード用2.1mm標準DCジャックDIP化キット",
+      quantity: 2,
+      unitPrice: 100,
+      subtotal: 200,
+    });
+    expect(result.items[1]).toMatchObject({
+      orderCode: "131939",
+      quantity: 3,
+      unitPrice: 1200,
+      subtotal: 3600,
+    });
+  });
+
+  it("必須要素が欠けた商品を警告し、取得済み商品は返す", () => {
+    const result = new AkizukiAdapter().extractCart(document);
+    expect(result.items).toHaveLength(2);
+    expect(result.warnings).toContainEqual(expect.objectContaining({
+      code: "quantity-not-found",
+      itemHint: "999999",
+    }));
+  });
+
+  it("空のカートを処理する", () => {
+    document.body.replaceChildren();
+    expect(new AkizukiAdapter().extractCart(document)).toEqual({
+      items: [],
+      warnings: [],
+      detectedCount: 0,
+    });
+  });
+});
