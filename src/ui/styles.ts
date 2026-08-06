@@ -219,6 +219,7 @@ export const CART2BOM_STYLES = `
 .cart2bom-action-menu { position: relative; }
 .cart2bom-action-menu summary { list-style: none; user-select: none; }
 .cart2bom-action-menu summary::-webkit-details-marker { display: none; }
+.cart2bom-action-menu[open] > summary { border-color: #5d8db7; color: #1559a6; background: #eef6fd; box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.09); }
 .cart2bom-action-menu-panel { position: absolute; right: 0; bottom: calc(100% + 7px); z-index: 3; display: grid; min-width: 220px; gap: 4px; border: 1px solid #d5dde6; border-radius: 11px; padding: 7px; background: #ffffff; box-shadow: 0 14px 38px rgba(20, 35, 55, 0.18); }
 .cart2bom-action-menu-panel .cart2bom-button { width: 100%; min-height: 37px; border-color: transparent; justify-content: flex-start; text-align: left; white-space: nowrap; box-shadow: none; }
 .cart2bom-action-menu-panel .cart2bom-button-danger { color: #a92620; }
@@ -308,6 +309,7 @@ export const CART2BOM_STYLES = `
 :root[data-cart2bom-theme="dark"] .cart2bom-editor-price strong,
 :root[data-cart2bom-theme="dark"] .cart2bom-list-total { color: #edf3f9; }
 :root[data-cart2bom-theme="dark"] .cart2bom-action-menu-panel { border-color: #465466; background: #18222f; box-shadow: 0 16px 42px rgba(0, 0, 0, 0.42); }
+:root[data-cart2bom-theme="dark"] .cart2bom-action-menu[open] > summary { border-color: #6289ad; color: #a7d5f8; background: #203247; box-shadow: 0 0 0 2px rgba(85, 165, 235, 0.1); }
 :root[data-cart2bom-theme="dark"] .cart2bom-error { color: #ffb0aa; background: #342125; }
 :root[data-cart2bom-theme="dark"] .cart2bom-warning-details { border-color: #7d6630; color: #efd58e; background: #292514; }
 :root[data-cart2bom-theme="dark"] .cart2bom-empty-state { border-color: #465466; color: #aab7c7; background: #18222e; }
@@ -317,6 +319,7 @@ export const CART2BOM_STYLES = `
 :root[data-cart2bom-theme="dark"] .cart2bom-list-actions { border-color: #303c4b; }
 :root[data-cart2bom-theme="dark"] .cart2bom-product-image { border-color: #455266; background: #ffffff; }
 :root[data-cart2bom-theme="dark"] .cart2bom-file-field { border-color: #4b5b6e; color: #b8c4d2; background: #18232f; }
+:root[data-cart2bom-theme="dark"] .cart2bom-import-intro { color: #aab7c7; }
 :root[data-cart2bom-theme="dark"] .cart2bom-checkbox-label { border-color: #364354; }
 :root[data-cart2bom-theme="dark"] .cart2bom-shared-summary { border-color: #345069; background: #172738; }
 :root[data-cart2bom-theme="dark"] .cart2bom-shared-summary p { color: #b5c2d1; }

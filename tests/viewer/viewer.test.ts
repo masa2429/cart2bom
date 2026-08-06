@@ -154,6 +154,9 @@ describe("GitHub Pages viewer", () => {
     expect(writeText.mock.calls[2]?.[0]).toBe("1");
     await vi.waitFor(() => expect(bulk?.classList.contains("viewer-copy-done")).toBe(true));
     await vi.waitFor(() => expect(code?.classList.contains("viewer-copy-done")).toBe(true));
+    expect(bulk?.textContent).toBe("✓ 一括入力用データをコピー済み");
+    expect(code?.textContent).toBe("✓ 10000000");
+    expect(code?.getAttribute("aria-label")).toContain("コピー済み");
     expect(document.querySelector('form[action="https://www.monotaro.com/monotaroMain.py"]')).toBeNull();
   });
 

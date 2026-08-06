@@ -86,6 +86,8 @@ function createMonotaroCopyGuide(
       copy.addEventListener("click", () => {
         void copyText(targetDocument, value).then(() => {
           copy.classList.add("viewer-copy-done");
+          copy.textContent = `✓ ${value}`;
+          copy.setAttribute("aria-label", `${fieldName}用の${value}をコピー済み`);
           status.textContent = `${fieldName}用の「${value}」をコピーしました。モノタロウの${fieldName}欄へ貼り付けてください。`;
         }).catch((caught: unknown) => {
           status.textContent = caught instanceof Error ? caught.message : "コピーできませんでした。";
@@ -237,6 +239,7 @@ function createStoreActions(
           const bulkText = batches.join("\n").replace(/\t/g, " ");
           void copyText(targetDocument, bulkText).then(() => {
             copyAll.classList.add("viewer-copy-done");
+            copyAll.textContent = "✓ 一括入力用データをコピー済み";
             status.textContent = "注文コードと数量を一括コピーしました。一括入力欄へ貼り付けてください。";
           }).catch((caught: unknown) => {
             status.textContent = caught instanceof Error ? caught.message : "コピーできませんでした。";

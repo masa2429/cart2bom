@@ -40,6 +40,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, summary:focus-visibl
 .viewer-button { display: inline-flex; align-items: center; justify-content: center; min-height: 42px; border: 1px solid #9eacbc; border-radius: 9px; padding: 9px 14px; color: #26364a; background: #fff; box-shadow: 0 1px 2px rgba(25, 40, 60, 0.04); font: 700 14px/1.25 inherit; text-decoration: none; cursor: pointer; transition: border-color 130ms ease, background 130ms ease, box-shadow 130ms ease, transform 130ms ease; }
 .viewer-button:hover { border-color: #5c82a7; background: #f3f8fc; box-shadow: 0 4px 11px rgba(31, 75, 115, 0.09); }
 .viewer-button:active { transform: translateY(1px); }
+.viewer-button:disabled { opacity: 0.5; cursor: wait; transform: none; }
 .viewer-button-primary { border-color: #1976d2; color: #fff; background: linear-gradient(145deg, #2484dc, #1769b6); box-shadow: 0 4px 12px rgba(25, 118, 210, 0.18); }
 .viewer-button-primary:hover { border-color: #125b9f; color: #fff; background: linear-gradient(145deg, #1976d2, #135b9f); }
 .viewer-button-filter { min-height: 36px; border-radius: 999px; padding: 7px 13px; font-size: 13px; }
@@ -81,12 +82,15 @@ button:focus-visible, a:focus-visible, input:focus-visible, summary:focus-visibl
 .viewer-sidebar .viewer-muted { font-size: 13px; line-height: 1.6; }
 .viewer-copy-guide { width: 100%; overflow: hidden; border: 1px solid #cbd6e3; border-radius: 9px; background: #f8fafc; }
 .viewer-copy-guide summary { padding: 10px 12px; cursor: pointer; font-weight: 700; }
+.viewer-copy-guide[open] { border-color: #89a8c4; }
+.viewer-copy-guide[open] > summary { color: #1559a6; background: #edf5fc; }
 .viewer-copy-table { width: 100%; border-collapse: collapse; font-size: 12px; }
 .viewer-copy-table th, .viewer-copy-table td { padding: 5px; border-top: 1px solid #dce3eb; text-align: center; }
 .viewer-copy-table thead th { color: #657387; font-weight: 600; }
 .viewer-copy-field-name { white-space: nowrap; color: #657387; font-weight: 600; }
 .viewer-sidebar .viewer-copy-table .viewer-button-copy-value { width: 100%; min-height: 32px; padding: 5px 7px; border-color: #9fb0c3; background: #fff; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 12px; }
-.viewer-sidebar .viewer-copy-done { border-color: #2a8a55; background: #eaf7ef; color: #17633b; }
+.viewer-sidebar .viewer-button.viewer-copy-done,
+.viewer-sidebar .viewer-copy-table .viewer-button-copy-value.viewer-copy-done { border-color: #2a8a55; color: #17633b; background: #eaf7ef; box-shadow: 0 0 0 2px rgba(42, 138, 85, 0.1); }
 .viewer-muted { color: #657387; }
 .viewer-error { color: #b3261e; white-space: pre-wrap; }
 .viewer-empty-state { max-width: 680px; margin: 80px auto; border: 1px solid #dce3eb; border-radius: 18px; padding: 42px; text-align: center; background: rgba(255, 255, 255, 0.97); box-shadow: 0 14px 42px rgba(40, 62, 90, 0.06); }
@@ -187,10 +191,13 @@ button:focus-visible, a:focus-visible, input:focus-visible, summary:focus-visibl
   .viewer-import-panel { border-color: #34526b; background: linear-gradient(145deg, #172b3c, #152536); }
   .viewer-store-panel { border-color: #354354; background: linear-gradient(145deg, #18222e, #141d28); }
   .viewer-copy-guide { border-color: #46566a; background: #18222e; }
+  .viewer-copy-guide[open] { border-color: #6687a4; }
+  .viewer-copy-guide[open] > summary { color: #9dcef5; background: #203247; }
   .viewer-copy-table th, .viewer-copy-table td { border-color: #344152; }
   .viewer-copy-table thead th, .viewer-copy-field-name { color: #a5b2c1; }
   .viewer-sidebar .viewer-copy-table .viewer-button-copy-value { border-color: #596b80; color: #e4ebf3; background: #111923; }
-  .viewer-sidebar .viewer-copy-done { border-color: #4d9a6c; color: #a9e6bf; background: #173324; }
+  .viewer-sidebar .viewer-button.viewer-copy-done,
+  .viewer-sidebar .viewer-copy-table .viewer-button-copy-value.viewer-copy-done { border-color: #4d9a6c; color: #a9e6bf; background: #173324; box-shadow: 0 0 0 2px rgba(77, 154, 108, 0.14); }
   .viewer-error { color: #ffaaa4; }
   .viewer-empty-state, .viewer-install-card { border-color: #344152; background: rgba(20, 29, 40, 0.97); box-shadow: 0 14px 44px rgba(0, 0, 0, 0.24); }
   .viewer-landing-lead { color: #b5c1cf; }
