@@ -12,6 +12,7 @@ export function openMainMenu(targetDocument: Document, actions: MainMenuActions)
   if (targetDocument.querySelector(".cart2bom-overlay")) return;
   const modal = openModal(targetDocument, "Cart2BOM");
   const store = targetDocument.createElement("p");
+  store.className = "cart2bom-store-context";
   store.textContent = `対象サイト：${actions.storeName}`;
   const menu = targetDocument.createElement("div");
   menu.className = "cart2bom-menu";

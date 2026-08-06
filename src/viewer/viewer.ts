@@ -350,13 +350,15 @@ export function renderLandingPage(targetDocument: Document, root: HTMLElement): 
   const main = element(targetDocument, "main", "viewer-landing");
   const panel = element(targetDocument, "section", "viewer-empty-state viewer-landing-card");
   panel.append(
-    element(targetDocument, "h1", undefined, "共有リストが指定されていません"),
+    createBrandMark(targetDocument),
+    element(targetDocument, "h1", undefined, "Cart2BOM"),
     element(
       targetDocument,
       "p",
-      "viewer-muted",
-      "Cart2BOMで作成した共有URLを開くと、ここに部品リストが表示されます。",
+      "viewer-landing-lead",
+      "通販サイトのカートを、保存・共有できる部品リストへ変換します。",
     ),
+    element(targetDocument, "p", "viewer-landing-note", "共有URLを開くと、ここに部品リストが表示されます。"),
   );
   const actions = element(targetDocument, "div", "viewer-button-row viewer-button-row-center");
   const install = element(targetDocument, "a", "viewer-button viewer-button-primary", "インストール方法を見る");
@@ -444,6 +446,11 @@ export function renderErrorPage(targetDocument: Document, root: HTMLElement, mes
     element(targetDocument, "h1", undefined, "共有リストを表示できません"),
     element(targetDocument, "p", "viewer-error", message),
   );
+  const actions = element(targetDocument, "div", "viewer-button-row viewer-button-row-center");
+  const back = element(targetDocument, "a", "viewer-button viewer-button-primary", "共有画面へ戻る");
+  back.href = "./";
+  actions.append(back);
+  panel.append(actions);
   main.append(panel);
   root.append(createHeader(targetDocument), main);
 }

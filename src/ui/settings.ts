@@ -7,6 +7,9 @@ export function openSettings(
   onSave: (settings: AppSettings) => Promise<void>,
 ): void {
   const modal = openModal(targetDocument, "設定");
+  const intro = targetDocument.createElement("p");
+  intro.className = "cart2bom-import-intro";
+  intro.textContent = "Cart2BOMの表示位置と確認動作を設定します。";
   const form = targetDocument.createElement("div");
   form.className = "cart2bom-form cart2bom-settings-form";
 
@@ -48,5 +51,8 @@ export function openSettings(
       save.disabled = false;
     }
   });
-  modal.content.append(form, error, save);
+  const actions = targetDocument.createElement("div");
+  actions.className = "cart2bom-actions";
+  actions.append(save);
+  modal.content.append(intro, form, error, actions);
 }

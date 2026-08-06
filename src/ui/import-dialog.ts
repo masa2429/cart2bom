@@ -7,9 +7,16 @@ export function openImportDialog(
   onImport: (list: SavedList) => Promise<void>,
 ): void {
   const modal = openModal(targetDocument, "JSONインポート");
+  const intro = targetDocument.createElement("p");
+  intro.className = "cart2bom-import-intro";
+  intro.textContent = "Cart2BOMから書き出したJSONファイルを選ぶか、内容を貼り付けてください。";
+  const fileLabel = targetDocument.createElement("label");
+  fileLabel.className = "cart2bom-file-field";
+  fileLabel.append(targetDocument.createTextNode("JSONファイルを選択"));
   const file = targetDocument.createElement("input");
   file.type = "file";
   file.accept = ".json,application/json";
+  fileLabel.append(file);
   const textarea = targetDocument.createElement("textarea");
   textarea.className = "cart2bom-import-text";
   textarea.placeholder = "JSONを貼り付けてください。";
@@ -37,5 +44,8 @@ export function openImportDialog(
       importButton.disabled = false;
     }
   });
-  modal.content.append(file, textarea, error, importButton);
+  const actions = targetDocument.createElement("div");
+  actions.className = "cart2bom-actions";
+  actions.append(importButton);
+  modal.content.append(intro, fileLabel, textarea, error, actions);
 }

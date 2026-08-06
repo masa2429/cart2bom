@@ -159,13 +159,14 @@ describe("GitHub Pages viewer", () => {
 
   it("通常ページと不正URL用の画面を安全に表示する", () => {
     renderLandingPage(document, root);
-    expect(document.body.textContent).toContain("共有リストが指定されていません");
+    expect(document.body.textContent).toContain("通販サイトのカートを、保存・共有できる部品リストへ変換します");
     const installGuide = Array.from(document.querySelectorAll<HTMLAnchorElement>("a"))
       .find((candidate) => candidate.textContent === "インストール方法を見る");
     expect(installGuide?.getAttribute("href")).toBe("../install/");
     renderErrorPage(document, root, "<script>危険</script>");
     expect(document.querySelector("script")).toBeNull();
     expect(document.body.textContent).toContain("<script>危険</script>");
+    expect(document.body.textContent).toContain("共有画面へ戻る");
   });
 
   it("Tampermonkeyを先に案内するインストールページを表示する", () => {

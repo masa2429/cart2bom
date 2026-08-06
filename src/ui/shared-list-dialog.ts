@@ -8,11 +8,14 @@ export function openSharedListDialog(
   onImport: (list: SavedList) => Promise<void>,
 ): void {
   const modal = openModal(targetDocument, "共有リストを取り込む");
+  const summaryPanel = targetDocument.createElement("section");
+  summaryPanel.className = "cart2bom-shared-summary";
   const name = targetDocument.createElement("h3");
   name.textContent = list.name;
   const summary = targetDocument.createElement("p");
   summary.textContent = `${list.items.length}商品・${formatListTotal(calculateListTotal(list.items))}`;
   const stores = targetDocument.createElement("ul");
+  stores.className = "cart2bom-store-counts";
   const counts = new Map<string, number>();
   for (const item of list.items) counts.set(item.storeName, (counts.get(item.storeName) ?? 0) + 1);
   for (const [storeName, count] of counts) {
@@ -21,6 +24,7 @@ export function openSharedListDialog(
     stores.append(entry);
   }
   const notice = targetDocument.createElement("p");
+  notice.className = "cart2bom-notice";
   notice.textContent = "内容を確認してから取り込んでください。取り込みだけではカートへの追加や注文は行いません。";
   const error = targetDocument.createElement("p");
   error.className = "cart2bom-error";
@@ -42,5 +46,6 @@ export function openSharedListDialog(
     }
   });
   actions.append(importButton, cancel);
-  modal.content.append(name, summary, stores, notice, error, actions);
+  summaryPanel.append(name, summary, stores);
+  modal.content.append(summaryPanel, notice, error, actions);
 }

@@ -19,6 +19,8 @@ export function openModal(targetDocument: Document, titleText: string): ModalHan
   header.className = "cart2bom-modal-header";
   const title = targetDocument.createElement("h2");
   title.textContent = titleText;
+  title.id = `cart2bom-modal-title-${Date.now()}`;
+  panel.setAttribute("aria-labelledby", title.id);
   const closeButton = targetDocument.createElement("button");
   closeButton.type = "button";
   closeButton.className = "cart2bom-icon-button";
@@ -66,5 +68,8 @@ export function showMessage(targetDocument: Document, title: string, message: st
   paragraph.textContent = message;
   const close = createButton(targetDocument, "閉じる", "primary");
   close.addEventListener("click", modal.close);
-  modal.content.append(paragraph, close);
+  const actions = targetDocument.createElement("div");
+  actions.className = "cart2bom-actions";
+  actions.append(close);
+  modal.content.append(paragraph, actions);
 }

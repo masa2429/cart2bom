@@ -60,8 +60,10 @@ export function openSavedLists(
   const modal = openModal(targetDocument, "保存済みリスト");
   const status = targetDocument.createElement("p");
   status.className = "cart2bom-error";
+  status.setAttribute("role", "alert");
   if (lists.length === 0) {
     const empty = targetDocument.createElement("p");
+    empty.className = "cart2bom-empty-state";
     empty.textContent = "この店舗の商品を含む保存済みリストはありません。";
     modal.content.append(empty);
     return;
@@ -74,6 +76,7 @@ export function openSavedLists(
     const title = targetDocument.createElement("h3");
     title.textContent = list.name;
     const meta = targetDocument.createElement("p");
+    meta.className = "cart2bom-list-meta";
     meta.textContent = `${list.items.length}商品・${formatListTotal(calculateListTotal(list.items))}・更新 ${new Date(list.updatedAt).toLocaleString("ja-JP")}`;
     const images = targetDocument.createElement("div");
     images.className = "cart2bom-list-images";
