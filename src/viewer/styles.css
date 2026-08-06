@@ -23,7 +23,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, summary:focus-visibl
 .viewer-nav-link:hover { color: #1559a6; }
 .viewer-nav-link-active { color: #1559a6; }
 .viewer-nav-link-active::after { position: absolute; right: 0; bottom: 0; left: 0; height: 3px; border-radius: 3px 3px 0 0; background: #1976d2; content: ""; }
-.viewer-main { width: min(1400px, calc(100% - 32px)); margin: 32px auto 72px; }
+.viewer-main { width: min(1680px, calc(100% - 32px)); margin: 32px auto 72px; }
 .viewer-content-layout { display: grid; grid-template-columns: minmax(0, 1fr) 350px; align-items: start; gap: 22px; }
 .viewer-primary { min-width: 0; }
 .viewer-sidebar { position: sticky; top: 80px; max-height: calc(100vh - 96px); overflow-y: auto; align-self: start; border: 1px solid #d9e2eb; border-radius: 16px; padding: 20px; background: rgba(255, 255, 255, 0.96); box-shadow: 0 12px 34px rgba(40, 62, 90, 0.065); scrollbar-color: #b7c4d2 transparent; scrollbar-gutter: stable; }
