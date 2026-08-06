@@ -9,9 +9,14 @@ body { margin: 0; min-width: 320px; background: #f3f6fa; }
 a { color: #1559a6; }
 button, a { -webkit-tap-highlight-color: transparent; }
 .viewer-header { position: sticky; top: 0; z-index: 10; display: flex; align-items: center; justify-content: space-between; min-height: 64px; border-bottom: 1px solid #dfe5ec; padding: 0 28px; background: rgba(255, 255, 255, 0.96); backdrop-filter: blur(10px); }
-.viewer-brand { color: #172033; font-size: 22px; font-weight: 800; text-decoration: none; }
+.viewer-brand { display: inline-flex; align-items: center; gap: 9px; color: #172033; font-size: 22px; font-weight: 800; text-decoration: none; }
+.viewer-brand-mark { display: inline-grid; width: 30px; height: 30px; place-items: center; border-radius: 9px; color: #fff; background: linear-gradient(145deg, #2687df, #155eaa); box-shadow: 0 4px 10px rgba(21, 94, 170, 0.18); }
+.viewer-brand-mark svg { width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .viewer-nav { display: flex; gap: 20px; }
-.viewer-nav-link { color: #42526a; font-weight: 650; text-decoration: none; }
+.viewer-nav-link { position: relative; padding: 21px 0 19px; color: #59677a; font-weight: 650; text-decoration: none; }
+.viewer-nav-link:hover { color: #1559a6; }
+.viewer-nav-link-active { color: #1559a6; }
+.viewer-nav-link-active::after { position: absolute; right: 0; bottom: 0; left: 0; height: 3px; border-radius: 3px 3px 0 0; background: #1976d2; content: ""; }
 .viewer-main { width: min(1400px, calc(100% - 32px)); margin: 32px auto 72px; }
 .viewer-content-layout { display: grid; grid-template-columns: minmax(0, 1fr) 350px; align-items: start; gap: 22px; }
 .viewer-primary { min-width: 0; }
@@ -80,17 +85,26 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .viewer-landing-card { margin-top: 72px; }
 .viewer-landing-card h1 { margin-top: 0; font-size: clamp(24px, 5vw, 32px); }
 .viewer-button-row-center { justify-content: center; }
-.viewer-install { width: min(760px, calc(100% - 32px)); margin: 48px auto 72px; }
-.viewer-install-card { border: 1px solid #dce3eb; border-radius: 18px; padding: 36px; background: #fff; box-shadow: 0 10px 30px rgba(40, 62, 90, 0.07); }
-.viewer-install-card > h1 { margin: 0; font-size: clamp(28px, 5vw, 40px); }
-.viewer-install-lead { margin: 14px 0 0; color: #42526a; font-size: 16px; line-height: 1.75; }
-.viewer-install-steps { display: grid; gap: 16px; margin: 28px 0 0; padding: 0; list-style: none; counter-reset: install-step; }
-.viewer-install-step { position: relative; border: 1px solid #dce3eb; border-radius: 14px; padding: 20px 20px 20px 72px; counter-increment: install-step; }
-.viewer-install-step::before { position: absolute; top: 20px; left: 20px; display: grid; width: 36px; height: 36px; place-items: center; border-radius: 50%; color: #fff; background: #1976d2; content: counter(install-step); font-weight: 800; }
-.viewer-install-step h2 { margin: 3px 0 8px; font-size: 20px; }
-.viewer-install-step p { margin: 0 0 14px; line-height: 1.65; }
-.viewer-install-note { margin-top: 20px; border-radius: 12px; padding: 16px 18px; color: #315274; background: #edf5fc; }
-.viewer-install-note p { margin: 5px 0 0; line-height: 1.6; }
+.viewer-install { width: min(760px, calc(100% - 32px)); margin: 42px auto 72px; }
+.viewer-install-card { border: 1px solid #dfe6ed; border-radius: 16px; padding: 38px 42px 32px; background: #fff; box-shadow: 0 14px 42px rgba(40, 62, 90, 0.055); }
+.viewer-install-card > .viewer-brand-mark { width: 42px; height: 42px; margin-bottom: 18px; border-radius: 12px; }
+.viewer-install-card > .viewer-brand-mark svg { width: 28px; height: 28px; }
+.viewer-install-card > h1 { margin: 0; font-size: clamp(30px, 5vw, 42px); letter-spacing: -0.025em; line-height: 1.25; }
+.viewer-install-lead { max-width: 620px; margin: 12px 0 0; color: #4f5f73; font-size: 17px; line-height: 1.75; }
+.viewer-install-badges { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 18px; }
+.viewer-install-badge { border: 1px solid #cddfed; border-radius: 999px; padding: 5px 10px; color: #315274; background: #f5f9fd; font-size: 12px; font-weight: 700; }
+.viewer-install-steps { position: relative; display: grid; gap: 0; margin: 34px 0 0; padding: 0; list-style: none; counter-reset: install-step; }
+.viewer-install-step { position: relative; margin-left: 19px; border-left: 2px solid #d5e4f2; padding: 0 0 30px 49px; counter-increment: install-step; }
+.viewer-install-step:last-child { border-left-color: transparent; padding-bottom: 4px; }
+.viewer-install-step::before { position: absolute; top: -2px; left: -20px; z-index: 1; display: grid; width: 38px; height: 38px; place-items: center; border: 4px solid #fff; border-radius: 50%; color: #fff; background: #1976d2; content: counter(install-step); font-size: 14px; font-weight: 800; box-shadow: 0 0 0 1px #bcd4e8; }
+.viewer-install-step-ready::before { color: #17633b; background: #e6f5ec; box-shadow: 0 0 0 1px #b9ddc7; }
+.viewer-install-step h2 { margin: 0 0 6px; padding-top: 3px; font-size: 20px; line-height: 1.45; }
+.viewer-install-step p { max-width: 570px; margin: 0 0 13px; line-height: 1.7; }
+.viewer-install-action { min-width: 270px; }
+.viewer-install-stores { display: flex; flex-wrap: wrap; gap: 7px; }
+.viewer-install-store { border-radius: 7px; padding: 6px 10px; color: #42526a; background: #f0f3f7; font-size: 12px; font-weight: 700; }
+.viewer-install-note { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 24px; border-top: 1px solid #e5eaf0; padding-top: 20px; color: #657387; font-size: 13px; line-height: 1.6; }
+.viewer-install-note strong { color: #42526a; }
 @media (max-width: 1050px) {
   .viewer-content-layout { grid-template-columns: 1fr; }
   .viewer-sidebar { position: static; max-height: none; overflow: visible; }
@@ -116,6 +130,10 @@ button, a { -webkit-tap-highlight-color: transparent; }
   .viewer-item-content { grid-column: 2; }
   .viewer-button { width: 100%; }
   .viewer-install-card { padding: 24px 18px; }
-  .viewer-install-step { padding: 18px; }
-  .viewer-install-step::before { position: static; margin-bottom: 12px; }
+  .viewer-install-card > .viewer-brand-mark { margin-bottom: 14px; }
+  .viewer-install-lead { font-size: 15px; }
+  .viewer-install-steps { margin-top: 28px; }
+  .viewer-install-step { margin-left: 17px; padding: 0 0 27px 38px; }
+  .viewer-install-step::before { left: -18px; width: 34px; height: 34px; }
+  .viewer-install-action { min-width: 0; }
 }

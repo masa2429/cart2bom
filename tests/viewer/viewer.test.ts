@@ -170,11 +170,15 @@ describe("GitHub Pages viewer", () => {
 
   it("Tampermonkeyを先に案内するインストールページを表示する", () => {
     renderInstallPage(document, root);
-    expect(document.body.textContent).toContain("先にTampermonkeyをインストールしてください");
+    expect(document.body.textContent).toContain("Tampermonkeyを準備");
+    expect(document.body.textContent).toContain("Cart2BOMを追加");
+    expect(document.body.textContent).toContain("対応サイトで使う");
+    expect(document.querySelectorAll(".viewer-install-step")).toHaveLength(3);
+    expect(document.querySelector('[aria-current="page"]')?.textContent).toBe("インストール");
     const links = Array.from(document.querySelectorAll<HTMLAnchorElement>("a"));
-    expect(links.find((candidate) => candidate.textContent === "Tampermonkey公式サイトを開く")?.href)
+    expect(links.find((candidate) => candidate.textContent === "Tampermonkey公式サイト ↗")?.href)
       .toBe("https://www.tampermonkey.net/");
-    expect(links.find((candidate) => candidate.textContent === "Cart2BOMのインストール画面を開く")?.href)
+    expect(links.find((candidate) => candidate.textContent === "Cart2BOMをインストール")?.href)
       .toBe("https://raw.githubusercontent.com/masa2429/cart2bom/main/dist/cart2bom.user.js");
   });
 });

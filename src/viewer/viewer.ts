@@ -101,13 +101,31 @@ function createMonotaroCopyGuide(
   return guide;
 }
 
-function createHeader(targetDocument: Document): HTMLElement {
+function createBrandMark(targetDocument: Document): HTMLElement {
+  const mark = element(targetDocument, "span", "viewer-brand-mark");
+  mark.setAttribute("aria-hidden", "true");
+  const svg = targetDocument.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("viewBox", "0 0 24 24");
+  svg.setAttribute("focusable", "false");
+  const path = targetDocument.createElementNS("http://www.w3.org/2000/svg", "path");
+  path.setAttribute("d", "M5 6h2l1.4 8.2h8.9l1.7-5.7H8.2M10 18.2h.1M17 18.2h.1M11 5v6m3-6v6");
+  svg.append(path);
+  mark.append(svg);
+  return mark;
+}
+
+function createHeader(targetDocument: Document, activePage?: "install"): HTMLElement {
   const header = element(targetDocument, "header", "viewer-header");
-  const brand = element(targetDocument, "a", "viewer-brand", "Cart2BOM");
+  const brand = element(targetDocument, "a", "viewer-brand");
   brand.href = "../";
+  brand.append(createBrandMark(targetDocument), element(targetDocument, "span", undefined, "Cart2BOM"));
   const nav = element(targetDocument, "nav", "viewer-nav");
   const install = element(targetDocument, "a", "viewer-nav-link", "インストール");
   install.href = INSTALL_GUIDE_URL;
+  if (activePage === "install") {
+    install.classList.add("viewer-nav-link-active");
+    install.setAttribute("aria-current", "page");
+  }
   const github = element(targetDocument, "a", "viewer-nav-link", "GitHub");
   github.href = GITHUB_URL;
   github.target = "_blank";
@@ -358,23 +376,28 @@ export function renderInstallPage(targetDocument: Document, root: HTMLElement): 
   const main = element(targetDocument, "main", "viewer-install");
   const panel = element(targetDocument, "section", "viewer-install-card");
   panel.append(
-    element(targetDocument, "p", "viewer-eyebrow", "INSTALL"),
-    element(targetDocument, "h1", undefined, "Cart2BOMをインストール"),
+    createBrandMark(targetDocument),
+    element(targetDocument, "h1", undefined, "Cart2BOMをはじめる"),
     element(
       targetDocument,
       "p",
       "viewer-install-lead",
-      "Cart2BOMはTampermonkey上で動作するユーザースクリプトです。先にTampermonkeyをインストールしてください。",
+      "通販サイトのカートを、保存・共有できる部品リストへ。2つの手順でインストールできます。",
     ),
   );
+  const badges = element(targetDocument, "div", "viewer-install-badges");
+  for (const label of ["PC版Chrome", "Tampermonkey", "無料・オープンソース"]) {
+    badges.append(element(targetDocument, "span", "viewer-install-badge", label));
+  }
+  panel.append(badges);
 
   const steps = element(targetDocument, "ol", "viewer-install-steps");
   const tampermonkeyStep = element(targetDocument, "li", "viewer-install-step");
   tampermonkeyStep.append(
-    element(targetDocument, "h2", undefined, "Tampermonkeyをインストール"),
-    element(targetDocument, "p", "viewer-muted", "ChromeへTampermonkeyを追加します。すでに導入済みの場合は次へ進んでください。"),
+    element(targetDocument, "h2", undefined, "Tampermonkeyを準備"),
+    element(targetDocument, "p", "viewer-muted", "ユーザースクリプトを動かすためのChrome拡張機能です。導入済みなら手順2へ進んでください。"),
   );
-  const tampermonkey = element(targetDocument, "a", "viewer-button viewer-button-secondary", "Tampermonkey公式サイトを開く");
+  const tampermonkey = element(targetDocument, "a", "viewer-button viewer-button-secondary viewer-install-action", "Tampermonkey公式サイト ↗");
   tampermonkey.href = TAMPERMONKEY_URL;
   tampermonkey.target = "_blank";
   tampermonkey.rel = "noopener noreferrer";
@@ -382,23 +405,34 @@ export function renderInstallPage(targetDocument: Document, root: HTMLElement): 
 
   const cart2bomStep = element(targetDocument, "li", "viewer-install-step");
   cart2bomStep.append(
-    element(targetDocument, "h2", undefined, "Cart2BOMをインストール"),
-    element(targetDocument, "p", "viewer-muted", "下のボタンを押し、Tampermonkeyの確認画面で「インストール」を選びます。"),
+    element(targetDocument, "h2", undefined, "Cart2BOMを追加"),
+    element(targetDocument, "p", "viewer-muted", "Tampermonkeyの確認画面が開いたら、内容を確認して「インストール」を押します。"),
   );
-  const install = element(targetDocument, "a", "viewer-button viewer-button-primary", "Cart2BOMのインストール画面を開く");
+  const install = element(targetDocument, "a", "viewer-button viewer-button-primary viewer-install-action", "Cart2BOMをインストール");
   install.href = INSTALL_URL;
   cart2bomStep.append(install);
-  steps.append(tampermonkeyStep, cart2bomStep);
+
+  const readyStep = element(targetDocument, "li", "viewer-install-step viewer-install-step-ready");
+  readyStep.append(
+    element(targetDocument, "h2", undefined, "対応サイトで使う"),
+    element(targetDocument, "p", "viewer-muted", "対象サイトを開くと、画面右下にCart2BOMボタンが表示されます。"),
+  );
+  const stores = element(targetDocument, "div", "viewer-install-stores");
+  for (const store of ["秋月電子通商", "モノタロウ", "ミスミ"]) {
+    stores.append(element(targetDocument, "span", "viewer-install-store", store));
+  }
+  readyStep.append(stores);
+  steps.append(tampermonkeyStep, cart2bomStep, readyStep);
   panel.append(steps);
 
   const note = element(targetDocument, "aside", "viewer-install-note");
   note.append(
-    element(targetDocument, "strong", undefined, "動作確認環境"),
-    element(targetDocument, "p", undefined, "PC版ChromeとTampermonkeyの組み合わせで確認しています。スマートフォンには対応していません。"),
+    element(targetDocument, "strong", undefined, "対応環境：PC版Chrome＋Tampermonkey"),
+    element(targetDocument, "span", undefined, "スマートフォンには対応していません。"),
   );
   panel.append(note);
   main.append(panel);
-  root.append(createHeader(targetDocument), main);
+  root.append(createHeader(targetDocument, "install"), main);
 }
 
 export function renderErrorPage(targetDocument: Document, root: HTMLElement, message: string): void {
