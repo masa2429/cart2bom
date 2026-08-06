@@ -6,12 +6,14 @@ import { build } from "esbuild";
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const outputRoot = resolve(projectRoot, "pages-dist");
 const shareRoot = resolve(outputRoot, "share");
+const installRoot = resolve(outputRoot, "install");
 
 if (!outputRoot.startsWith(`${projectRoot}\\`) && !outputRoot.startsWith(`${projectRoot}/`)) {
   throw new Error("Pages出力先がプロジェクト外です。");
 }
 await rm(outputRoot, { recursive: true, force: true });
 await mkdir(shareRoot, { recursive: true });
+await mkdir(installRoot, { recursive: true });
 await build({
   entryPoints: [resolve(projectRoot, "src/viewer/main.ts")],
   outdir: shareRoot,
@@ -24,6 +26,7 @@ await build({
 });
 await Promise.all([
   copyFile(resolve(projectRoot, "src/viewer/index.html"), resolve(shareRoot, "index.html")),
+  copyFile(resolve(projectRoot, "src/viewer/install.html"), resolve(installRoot, "index.html")),
   copyFile(resolve(projectRoot, "src/viewer/root.html"), resolve(outputRoot, "index.html")),
   writeFile(resolve(outputRoot, ".nojekyll"), "", "utf8"),
 ]);

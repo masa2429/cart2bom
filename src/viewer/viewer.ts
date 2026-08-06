@@ -12,6 +12,8 @@ import { createProductImage } from "../ui/product-image";
 import { createSharedQuickOrderUrl } from "../core/share-url";
 
 const INSTALL_URL = "https://raw.githubusercontent.com/masa2429/cart2bom/main/dist/cart2bom.user.js";
+const INSTALL_GUIDE_URL = "../install/";
+const TAMPERMONKEY_URL = "https://www.tampermonkey.net/";
 const GITHUB_URL = "https://github.com/masa2429/cart2bom";
 
 function element<K extends keyof HTMLElementTagNameMap>(
@@ -105,7 +107,7 @@ function createHeader(targetDocument: Document): HTMLElement {
   brand.href = "../";
   const nav = element(targetDocument, "nav", "viewer-nav");
   const install = element(targetDocument, "a", "viewer-nav-link", "インストール");
-  install.href = INSTALL_URL;
+  install.href = INSTALL_GUIDE_URL;
   const github = element(targetDocument, "a", "viewer-nav-link", "GitHub");
   github.href = GITHUB_URL;
   github.target = "_blank";
@@ -339,14 +341,62 @@ export function renderLandingPage(targetDocument: Document, root: HTMLElement): 
     ),
   );
   const actions = element(targetDocument, "div", "viewer-button-row viewer-button-row-center");
-  const install = element(targetDocument, "a", "viewer-button viewer-button-primary", "Cart2BOMをインストール");
-  install.href = INSTALL_URL;
+  const install = element(targetDocument, "a", "viewer-button viewer-button-primary", "インストール方法を見る");
+  install.href = INSTALL_GUIDE_URL;
   const github = element(targetDocument, "a", "viewer-button viewer-button-secondary", "GitHubを見る");
   github.href = GITHUB_URL;
   github.target = "_blank";
   github.rel = "noopener noreferrer";
   actions.append(install, github);
   panel.append(actions);
+  main.append(panel);
+  root.append(createHeader(targetDocument), main);
+}
+
+export function renderInstallPage(targetDocument: Document, root: HTMLElement): void {
+  root.replaceChildren();
+  const main = element(targetDocument, "main", "viewer-install");
+  const panel = element(targetDocument, "section", "viewer-install-card");
+  panel.append(
+    element(targetDocument, "p", "viewer-eyebrow", "INSTALL"),
+    element(targetDocument, "h1", undefined, "Cart2BOMをインストール"),
+    element(
+      targetDocument,
+      "p",
+      "viewer-install-lead",
+      "Cart2BOMはTampermonkey上で動作するユーザースクリプトです。先にTampermonkeyをインストールしてください。",
+    ),
+  );
+
+  const steps = element(targetDocument, "ol", "viewer-install-steps");
+  const tampermonkeyStep = element(targetDocument, "li", "viewer-install-step");
+  tampermonkeyStep.append(
+    element(targetDocument, "h2", undefined, "Tampermonkeyをインストール"),
+    element(targetDocument, "p", "viewer-muted", "ChromeへTampermonkeyを追加します。すでに導入済みの場合は次へ進んでください。"),
+  );
+  const tampermonkey = element(targetDocument, "a", "viewer-button viewer-button-secondary", "Tampermonkey公式サイトを開く");
+  tampermonkey.href = TAMPERMONKEY_URL;
+  tampermonkey.target = "_blank";
+  tampermonkey.rel = "noopener noreferrer";
+  tampermonkeyStep.append(tampermonkey);
+
+  const cart2bomStep = element(targetDocument, "li", "viewer-install-step");
+  cart2bomStep.append(
+    element(targetDocument, "h2", undefined, "Cart2BOMをインストール"),
+    element(targetDocument, "p", "viewer-muted", "下のボタンを押し、Tampermonkeyの確認画面で「インストール」を選びます。"),
+  );
+  const install = element(targetDocument, "a", "viewer-button viewer-button-primary", "Cart2BOMのインストール画面を開く");
+  install.href = INSTALL_URL;
+  cart2bomStep.append(install);
+  steps.append(tampermonkeyStep, cart2bomStep);
+  panel.append(steps);
+
+  const note = element(targetDocument, "aside", "viewer-install-note");
+  note.append(
+    element(targetDocument, "strong", undefined, "動作確認環境"),
+    element(targetDocument, "p", undefined, "PC版ChromeとTampermonkeyの組み合わせで確認しています。スマートフォンには対応していません。"),
+  );
+  panel.append(note);
   main.append(panel);
   root.append(createHeader(targetDocument), main);
 }

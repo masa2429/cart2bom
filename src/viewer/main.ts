@@ -1,12 +1,14 @@
 import { hasSharedListFragment, readSharedListUrl } from "../core/share-url";
-import { renderErrorPage, renderLandingPage, renderSharedListPage } from "./viewer";
+import { renderErrorPage, renderInstallPage, renderLandingPage, renderSharedListPage } from "./viewer";
 import "./styles.css";
 
 const root = document.getElementById("cart2bom-viewer");
 if (!(root instanceof HTMLElement)) throw new Error("Cart2BOMビューアの表示領域がありません。");
 
 const url = new URL(window.location.href);
-if (!hasSharedListFragment(url)) {
+if (url.pathname.endsWith("/install/") || url.pathname.endsWith("/install/index.html")) {
+  renderInstallPage(document, root);
+} else if (!hasSharedListFragment(url)) {
   renderLandingPage(document, root);
 } else {
   void readSharedListUrl(url).then((list) => {

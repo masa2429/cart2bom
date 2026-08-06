@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { CURRENT_SCHEMA_VERSION, type SavedList } from "../../src/core/models";
-import { renderErrorPage, renderLandingPage, renderSharedListPage } from "../../src/viewer/viewer";
+import { renderErrorPage, renderInstallPage, renderLandingPage, renderSharedListPage } from "../../src/viewer/viewer";
 
 const list: SavedList = {
   id: "viewer-list",
@@ -160,9 +160,21 @@ describe("GitHub Pages viewer", () => {
   it("通常ページと不正URL用の画面を安全に表示する", () => {
     renderLandingPage(document, root);
     expect(document.body.textContent).toContain("共有リストが指定されていません");
-    expect(document.body.textContent).toContain("Cart2BOMをインストール");
+    const installGuide = Array.from(document.querySelectorAll<HTMLAnchorElement>("a"))
+      .find((candidate) => candidate.textContent === "インストール方法を見る");
+    expect(installGuide?.getAttribute("href")).toBe("../install/");
     renderErrorPage(document, root, "<script>危険</script>");
     expect(document.querySelector("script")).toBeNull();
     expect(document.body.textContent).toContain("<script>危険</script>");
+  });
+
+  it("Tampermonkeyを先に案内するインストールページを表示する", () => {
+    renderInstallPage(document, root);
+    expect(document.body.textContent).toContain("先にTampermonkeyをインストールしてください");
+    const links = Array.from(document.querySelectorAll<HTMLAnchorElement>("a"));
+    expect(links.find((candidate) => candidate.textContent === "Tampermonkey公式サイトを開く")?.href)
+      .toBe("https://www.tampermonkey.net/");
+    expect(links.find((candidate) => candidate.textContent === "Cart2BOMのインストール画面を開く")?.href)
+      .toBe("https://raw.githubusercontent.com/masa2429/cart2bom/main/dist/cart2bom.user.js");
   });
 });
