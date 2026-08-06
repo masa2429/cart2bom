@@ -17,4 +17,11 @@ describe("SettingsService", () => {
     await storage.set(STORAGE_KEYS.settings, { buttonSide: "center" });
     await expect(new SettingsService(storage).get()).rejects.toThrow("設定データが壊れています");
   });
+
+  it("テーマ設定がない旧形式を自動テーマへ移行する", async () => {
+    const storage = new MemoryStorageProvider();
+    const { theme: _theme, ...legacy } = DEFAULT_SETTINGS;
+    await storage.set(STORAGE_KEYS.settings, legacy);
+    await expect(new SettingsService(storage).get()).resolves.toEqual({ ...legacy, theme: "auto" });
+  });
 });

@@ -32,6 +32,7 @@ import { filterSavedListsByStore, openSavedLists } from "./ui/saved-lists";
 import { openSettings } from "./ui/settings";
 import { openSharedListDialog } from "./ui/shared-list-dialog";
 import { showToast } from "./ui/toast";
+import { applyCart2BOMTheme } from "./ui/styles";
 
 /** Starts Cart2BOM only on a supported store domain. */
 export function startCart2BOM(): void {
@@ -45,6 +46,7 @@ export function startCart2BOM(): void {
   const listService = new ListService(storage);
   const settingsService = new SettingsService(storage);
   let settings: AppSettings = { ...DEFAULT_SETTINGS };
+  applyCart2BOMTheme(document, settings.theme);
 
   const saveNewList = async (value: CartEditorValue): Promise<void> => {
     try {
@@ -233,6 +235,7 @@ export function startCart2BOM(): void {
       onSettings: () => openSettings(document, settings, async (next) => {
         await settingsService.save(next);
         settings = next;
+        applyCart2BOMTheme(document, next.theme);
         const button = document.getElementById("cart2bom-floating-button");
         if (button instanceof HTMLButtonElement) button.dataset.side = next.buttonSide;
         showToast(document, "設定を保存しました。");
@@ -243,6 +246,7 @@ export function startCart2BOM(): void {
   const button = mountFloatingButton(document, openMenu, settings.buttonSide);
   void settingsService.get().then((loaded) => {
     settings = loaded;
+    applyCart2BOMTheme(document, loaded.theme);
     button.dataset.side = loaded.buttonSide;
   }).catch((error: unknown) => {
     console.error("[Cart2BOM] settings", error);

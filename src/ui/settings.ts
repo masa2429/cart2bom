@@ -25,13 +25,25 @@ export function openSettings(
   sideLabel.textContent = "固定ボタンの位置";
   sideLabel.append(side);
 
+  const theme = targetDocument.createElement("select");
+  for (const [value, label] of [["auto", "自動（OS設定に合わせる）"], ["light", "ライト"], ["dark", "ダーク"]] as const) {
+    const option = targetDocument.createElement("option");
+    option.value = value;
+    option.textContent = label;
+    theme.append(option);
+  }
+  theme.value = current.theme;
+  const themeLabel = targetDocument.createElement("label");
+  themeLabel.textContent = "表示テーマ";
+  themeLabel.append(theme);
+
   const confirmDelete = targetDocument.createElement("input");
   confirmDelete.type = "checkbox";
   confirmDelete.checked = current.confirmBeforeDelete;
   const confirmLabel = targetDocument.createElement("label");
   confirmLabel.className = "cart2bom-checkbox-label";
   confirmLabel.append(confirmDelete, targetDocument.createTextNode("削除前に確認する"));
-  form.append(sideLabel, confirmLabel);
+  form.append(sideLabel, themeLabel, confirmLabel);
 
   const error = targetDocument.createElement("p");
   error.className = "cart2bom-error";
@@ -43,6 +55,7 @@ export function openSettings(
         ...current,
         buttonSide: side.value === "left" ? "left" : "right",
         confirmBeforeDelete: confirmDelete.checked,
+        theme: theme.value === "dark" ? "dark" : theme.value === "light" ? "light" : "auto",
       });
       modal.close();
     } catch (caught) {

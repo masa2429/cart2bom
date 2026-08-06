@@ -153,6 +153,58 @@ button:focus-visible, a:focus-visible, input:focus-visible, summary:focus-visibl
   .viewer-install-action { min-width: 0; }
 }
 
+@media (prefers-color-scheme: dark) {
+  :root { color: #e8eef6; background: #0d141e; color-scheme: dark; }
+  body { background: radial-gradient(circle at 50% 0, #172231 0, #101923 42%, #0b121b 100%); }
+  a { color: #78baf1; }
+  .viewer-header { border-color: #2d3948; background: rgba(15, 23, 33, 0.96); }
+  .viewer-brand { color: #eef3f8; }
+  .viewer-nav-link { color: #aab6c5; }
+  .viewer-nav-link:hover, .viewer-nav-link-active { color: #78baf1; }
+  .viewer-sidebar { border-color: #344152; background: rgba(20, 29, 40, 0.97); box-shadow: 0 12px 36px rgba(0, 0, 0, 0.24); scrollbar-color: #526174 transparent; }
+  .viewer-summary { border-color: #344354; background: linear-gradient(135deg, #182330 0%, #152333 72%, #142b40 100%); box-shadow: 0 12px 38px rgba(0, 0, 0, 0.22); }
+  .viewer-summary::after { background: rgba(84, 165, 235, 0.08); }
+  .viewer-eyebrow { color: #69b1ee; }
+  .viewer-description, .viewer-muted, .viewer-item-code, .viewer-install-lead { color: #aab7c7; }
+  .viewer-tag, .viewer-store-badge { color: #b9dbf5; background: #203b53; }
+  .viewer-status { color: #9fc9eb; }
+  .viewer-button { border-color: #526277; color: #e1e9f2; background: #1a2532; box-shadow: none; }
+  .viewer-button:hover { border-color: #75889f; background: #263546; }
+  .viewer-button-primary { border-color: #438fd1; color: #fff; background: linear-gradient(145deg, #2d8bd9, #1765a8); box-shadow: 0 4px 14px rgba(0, 0, 0, 0.24); }
+  .viewer-button-primary:hover { border-color: #63adeb; color: #fff; background: linear-gradient(145deg, #3997e3, #1e72b8); }
+  .viewer-filter-active { border-color: #55a5eb; color: #fff; background: #1765a8; }
+  .viewer-controls { border-color: #344152; background: rgba(20, 29, 40, 0.82); }
+  .viewer-item-card { border-color: #344152; background: #141d28; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.17); }
+  .viewer-item-card:hover { border-color: #4b5d71; box-shadow: 0 10px 28px rgba(0, 0, 0, 0.24); }
+  .viewer-item-media { border-color: #3a4757; color: #8e9cac; background: linear-gradient(145deg, #18222e, #111923); }
+  .viewer-item-media img { border-radius: 6px; background: #fff; }
+  .viewer-item-title a { color: #edf3f8; text-decoration-color: #526f89; }
+  .viewer-item-title a:hover { color: #78baf1; text-decoration-color: #78baf1; }
+  .viewer-item-details { border-color: #303c4b; }
+  .viewer-item-details dt { color: #8f9eaf; }
+  .viewer-item-details dd { color: #e1e8f0; }
+  .viewer-item-note { border-color: #c59b3a; color: #ead79e; background: #282313; }
+  .viewer-import-panel { border-color: #34526b; background: linear-gradient(145deg, #172b3c, #152536); }
+  .viewer-store-panel { border-color: #354354; background: linear-gradient(145deg, #18222e, #141d28); }
+  .viewer-copy-guide { border-color: #46566a; background: #18222e; }
+  .viewer-copy-table th, .viewer-copy-table td { border-color: #344152; }
+  .viewer-copy-table thead th, .viewer-copy-field-name { color: #a5b2c1; }
+  .viewer-sidebar .viewer-copy-table .viewer-button-copy-value { border-color: #596b80; color: #e4ebf3; background: #111923; }
+  .viewer-sidebar .viewer-copy-done { border-color: #4d9a6c; color: #a9e6bf; background: #173324; }
+  .viewer-error { color: #ffaaa4; }
+  .viewer-empty-state, .viewer-install-card { border-color: #344152; background: rgba(20, 29, 40, 0.97); box-shadow: 0 14px 44px rgba(0, 0, 0, 0.24); }
+  .viewer-landing-lead { color: #b5c1cf; }
+  .viewer-landing-note { color: #a9b6c5; background: #202b38; }
+  .viewer-install-badge { border-color: #3c566e; color: #b9d9f2; background: #172738; }
+  .viewer-install-step { border-color: #35526b; }
+  .viewer-install-step:last-child { border-color: transparent; }
+  .viewer-install-step::before { border-color: #141d28; box-shadow: 0 0 0 1px #4b6d88; }
+  .viewer-install-step-ready::before { color: #a8e2bd; background: #1c3a29; box-shadow: 0 0 0 1px #48765a; }
+  .viewer-install-store { color: #c3ceda; background: #202b38; }
+  .viewer-install-note { border-color: #344152; color: #9eabba; }
+  .viewer-install-note strong { color: #c6d0dc; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .viewer-button, .viewer-item-card { transition: none; }
 }

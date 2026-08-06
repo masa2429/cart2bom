@@ -37,6 +37,7 @@ export interface AppSettings {
   buttonSide: "left" | "right";
   confirmBeforeDelete: boolean;
   defaultExportFormat: "csv" | "tsv" | "json" | "quickOrder";
+  theme: "auto" | "light" | "dark";
 }
 
 export const DEFAULT_SETTINGS: Readonly<AppSettings> = {
@@ -44,6 +45,7 @@ export const DEFAULT_SETTINGS: Readonly<AppSettings> = {
   buttonSide: "right",
   confirmBeforeDelete: true,
   defaultExportFormat: "csv",
+  theme: "auto",
 };
 
 export const STORAGE_KEYS = {

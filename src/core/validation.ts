@@ -163,14 +163,16 @@ export function parseSavedListJson(text: string): ValidationResult<SavedList> {
 }
 
 export function validateAppSettings(value: unknown): ValidationResult<AppSettings> {
+  const theme = isRecord(value) && value.theme === undefined ? "auto" : isRecord(value) ? value.theme : undefined;
   if (
     !isRecord(value) ||
     value.schemaVersion !== CURRENT_SCHEMA_VERSION ||
     (value.buttonSide !== "left" && value.buttonSide !== "right") ||
     typeof value.confirmBeforeDelete !== "boolean" ||
-    !["csv", "tsv", "json", "quickOrder"].includes(String(value.defaultExportFormat))
+    !["csv", "tsv", "json", "quickOrder"].includes(String(value.defaultExportFormat)) ||
+    (theme !== "auto" && theme !== "light" && theme !== "dark")
   ) {
     return { ok: false, issues: [{ path: "$", message: "設定データが不正です。" }] };
   }
-  return { ok: true, value: value as unknown as AppSettings };
+  return { ok: true, value: { ...value, theme } as unknown as AppSettings };
 }

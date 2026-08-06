@@ -25,7 +25,7 @@ export function mountFloatingButton(
   const button = targetDocument.createElement("button");
   button.id = FLOATING_BUTTON_ID;
   button.type = "button";
-  button.textContent = "🛒 Cart2BOM";
+  button.textContent = "Cart2BOM";
   button.title = "Cart2BOMメニューを開く";
   button.setAttribute("aria-haspopup", "dialog");
   button.setAttribute("aria-expanded", "false");
