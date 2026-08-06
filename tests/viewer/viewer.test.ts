@@ -48,6 +48,7 @@ describe("GitHub Pages viewer", () => {
     expect(document.querySelector(".viewer-list-title")?.textContent).toBe("装置A 電装部品");
     expect(document.querySelector(".viewer-total")?.textContent).toContain("2/2商品を選択・合計 800円");
     expect(document.querySelectorAll(".viewer-item-card")).toHaveLength(2);
+    expect(document.querySelectorAll(".viewer-filters .viewer-button-filter")).toHaveLength(3);
     expect(document.querySelector(".viewer-content-layout")?.children).toHaveLength(2);
     expect(document.querySelector(".viewer-sidebar")?.textContent).toContain("共有・ファイル出力");
     expect(document.querySelector(".viewer-sidebar")?.textContent).toContain("店舗で注文する");
@@ -74,6 +75,16 @@ describe("GitHub Pages viewer", () => {
     const importLink = Array.from(document.querySelectorAll<HTMLAnchorElement>("a"))
       .find((candidate) => candidate.textContent === "Cart2BOMへ取り込む");
     expect(importLink?.href).toContain("akizukidenshi.com/catalog/cart/cart.aspx#cart2bom=j.test");
+  });
+
+  it("単一店舗のリストでは冗長な店舗フィルタを表示しない", () => {
+    const singleStoreList: SavedList = { ...list, items: [list.items[1]!] };
+    renderSharedListPage(document, root, singleStoreList, "https://masa2429.github.io/cart2bom/share/#cart2bom=j.test");
+
+    expect(document.querySelector(".viewer-filters")).toBeNull();
+    expect(document.querySelector(".viewer-controls")?.classList).toContain("viewer-controls-selection-only");
+    expect(document.querySelector(".viewer-selection-actions")?.textContent).toContain("すべて選択");
+    expect(document.querySelector(".viewer-selection-actions")?.textContent).toContain("すべて解除");
   });
 
   it("商品の選択解除を合計と店舗別出力へ反映する", () => {

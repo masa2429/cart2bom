@@ -486,8 +486,6 @@ export function renderSharedListPage(
   summaryPanel.append(total);
 
   const controls = element(targetDocument, "section", "viewer-controls");
-  const filters = element(targetDocument, "div", "viewer-filters");
-  filters.setAttribute("aria-label", "店舗で絞り込む");
   const storeNames = new Map<string, string>();
   for (const item of list.items) storeNames.set(item.storeId, item.storeName);
   const filterButtons = new Map<string, HTMLButtonElement>();
@@ -500,18 +498,25 @@ export function renderSharedListPage(
       filterButton.setAttribute("aria-pressed", String(id === storeId));
     }
   };
-  for (const [storeId, label] of [["all", "すべて"], ...storeNames] as Array<[string, string]>) {
-    const filter = button(targetDocument, label, "filter");
-    filter.setAttribute("aria-pressed", String(storeId === "all"));
-    filter.addEventListener("click", () => setFilter(storeId));
-    filterButtons.set(storeId, filter);
-    filters.append(filter);
+  if (storeNames.size > 1) {
+    const filters = element(targetDocument, "div", "viewer-filters");
+    filters.setAttribute("aria-label", "店舗で絞り込む");
+    for (const [storeId, label] of [["all", "すべて"], ...storeNames] as Array<[string, string]>) {
+      const filter = button(targetDocument, label, "filter");
+      filter.setAttribute("aria-pressed", String(storeId === "all"));
+      filter.addEventListener("click", () => setFilter(storeId));
+      filterButtons.set(storeId, filter);
+      filters.append(filter);
+    }
+    controls.append(filters);
+  } else {
+    controls.classList.add("viewer-controls-selection-only");
   }
   const selectionActions = element(targetDocument, "div", "viewer-selection-actions");
   const selectAll = button(targetDocument, "すべて選択");
   const clearAll = button(targetDocument, "すべて解除");
   selectionActions.append(selectAll, clearAll);
-  controls.append(filters, selectionActions);
+  controls.append(selectionActions);
 
   const listSection = element(targetDocument, "section", "viewer-list-section");
   const itemsContainer = element(targetDocument, "div", "viewer-items");

@@ -46,6 +46,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, summary:focus-visibl
 .viewer-button-filter { min-height: 36px; border-radius: 999px; padding: 7px 13px; font-size: 13px; }
 .viewer-filter-active { border-color: #1769aa; color: #fff; background: #1976d2; }
 .viewer-controls { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin: 24px 0 14px; border: 1px solid #e0e6ed; border-radius: 12px; padding: 10px; background: rgba(255, 255, 255, 0.75); }
+.viewer-controls-selection-only { justify-content: flex-end; }
 .viewer-filters, .viewer-selection-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .viewer-items { display: grid; gap: 12px; }
 .viewer-item-card { display: grid; grid-template-columns: 34px 112px minmax(0, 1fr); gap: 18px; border: 1px solid #dce3eb; border-radius: 14px; padding: 18px; background: #fff; box-shadow: 0 4px 14px rgba(40, 62, 90, 0.045); transition: border-color 150ms ease, box-shadow 150ms ease, transform 150ms ease; }
