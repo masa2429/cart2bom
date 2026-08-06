@@ -1,4 +1,4 @@
-import { copyFile, mkdir, rm, writeFile } from "node:fs/promises";
+import { copyFile, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { build } from "esbuild";
@@ -7,6 +7,12 @@ const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const outputRoot = resolve(projectRoot, "pages-dist");
 const shareRoot = resolve(outputRoot, "share");
 const installRoot = resolve(outputRoot, "install");
+const packageJson = JSON.parse(await readFile(resolve(projectRoot, "package.json"), "utf8"));
+
+async function writeVersionedHtml(source, destination) {
+  const html = await readFile(source, "utf8");
+  await writeFile(destination, html.replaceAll("__CART2BOM_VERSION__", packageJson.version), "utf8");
+}
 
 if (!outputRoot.startsWith(`${projectRoot}\\`) && !outputRoot.startsWith(`${projectRoot}/`)) {
   throw new Error("Pages出力先がプロジェクト外です。");
@@ -25,8 +31,8 @@ await build({
   entryNames: "main",
 });
 await Promise.all([
-  copyFile(resolve(projectRoot, "src/viewer/index.html"), resolve(shareRoot, "index.html")),
-  copyFile(resolve(projectRoot, "src/viewer/install.html"), resolve(installRoot, "index.html")),
+  writeVersionedHtml(resolve(projectRoot, "src/viewer/index.html"), resolve(shareRoot, "index.html")),
+  writeVersionedHtml(resolve(projectRoot, "src/viewer/install.html"), resolve(installRoot, "index.html")),
   copyFile(resolve(projectRoot, "src/viewer/root.html"), resolve(outputRoot, "index.html")),
   writeFile(resolve(outputRoot, ".nojekyll"), "", "utf8"),
 ]);
