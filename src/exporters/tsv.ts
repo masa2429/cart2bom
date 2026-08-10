@@ -1,8 +1,9 @@
 import type { SavedList } from "../core/models";
-import { EXPORT_COLUMNS, itemToExportValues } from "./columns";
+import { EXPORT_COLUMNS, itemToExportValues, neutralizeFormula } from "./columns";
 
+// Neutralize before collapsing, so a value led by a tab is still recognized.
 function normalizeTsv(value: string): string {
-  return value.replace(/[\t\r\n]+/g, " ");
+  return neutralizeFormula(value).replace(/[\t\r\n]+/g, " ");
 }
 
 export function exportTsv(list: SavedList): string {

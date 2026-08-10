@@ -42,6 +42,29 @@ describe("exporters", () => {
     expect(tsv).not.toContain("A\tB");
   });
 
+  it("CSVとTSVで数式として解釈される値を無害化する", () => {
+    const hostile: SavedList = {
+      ...list,
+      items: [{ ...item, name: "=HYPERLINK(\"http://evil.test\")", note: " @SUM(A1)", manufacturerName: "\t+1+1" }],
+    };
+    const csv = exportCsv(hostile);
+    const tsv = exportTsv(hostile);
+    expect(csv).toContain("\"'=HYPERLINK(");
+    expect(csv).toContain("' @SUM(A1)");
+    expect(csv).not.toMatch(/,=HYPERLINK/);
+    // The leading tab is collapsed to a space after the apostrophe is added.
+    expect(tsv).toContain("' +1+1");
+    expect(tsv).toContain("' @SUM(A1)");
+    expect(tsv).toContain("'=HYPERLINK(");
+  });
+
+  it("通常の値へ引用符を足さない", () => {
+    const csv = exportCsv(list);
+    expect(csv).toContain(",105148,");
+    expect(csv).toContain(",2,100,200,JPY,");
+    expect(csv).not.toContain("'");
+  });
+
   it("JSONを再インポートできる", () => {
     expect(parseSavedListJson(exportJson(list))).toEqual({ ok: true, value: list });
   });

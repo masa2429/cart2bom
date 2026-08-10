@@ -1,8 +1,9 @@
 import type { SavedList } from "../core/models";
-import { EXPORT_COLUMNS, itemToExportValues } from "./columns";
+import { EXPORT_COLUMNS, itemToExportValues, neutralizeFormula } from "./columns";
 
 function escapeCsv(value: string): string {
-  return /[",\r\n]/.test(value) ? `"${value.replace(/"/g, '""')}"` : value;
+  const text = neutralizeFormula(value);
+  return /[",\r\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
 }
 
 export function exportCsv(list: SavedList): string {
