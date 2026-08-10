@@ -15,6 +15,13 @@ export interface ListInput {
   items: CartItem[];
 }
 
+export interface LoadedLists {
+  /** Lists that passed validation, newest first. */
+  lists: SavedList[];
+  /** Entries that failed validation. Kept as-is so they are never lost. */
+  broken: unknown[];
+}
+
 export class ListService {
   public constructor(
     private readonly storage: StorageProvider,
@@ -22,24 +29,35 @@ export class ListService {
     private readonly createId: () => string = () => crypto.randomUUID(),
   ) {}
 
-  public async getAll(): Promise<SavedList[]> {
+  /**
+   * Reads storage without letting one damaged entry hide the rest.
+   *
+   * Only a non-array value fails outright, because then no individual list can
+   * be recovered. Damaged entries are returned untouched and written back by
+   * every mutation, so a later Cart2BOM version can still repair them.
+   */
+  public async load(): Promise<LoadedLists> {
     const raw = await this.storage.get<unknown>(STORAGE_KEYS.lists, []);
     if (!Array.isArray(raw)) {
       throw new StorageDataError("保存済みリストの形式が壊れています。", raw);
     }
     const lists: SavedList[] = [];
+    const broken: unknown[] = [];
     for (const value of raw) {
       const result = validateSavedList(value);
-      if (!result.ok) {
-        throw new StorageDataError("保存済みリストに不正なデータがあります。", raw);
-      }
-      lists.push(result.value);
+      if (result.ok) lists.push(result.value);
+      else broken.push(value);
     }
-    return lists.sort((left, right) => right.updatedAt.localeCompare(left.updatedAt));
+    lists.sort((left, right) => right.updatedAt.localeCompare(left.updatedAt));
+    return { lists, broken };
+  }
+
+  public async getAll(): Promise<SavedList[]> {
+    return (await this.load()).lists;
   }
 
   public async create(input: ListInput, overwrite = false): Promise<SavedList> {
-    const lists = await this.getAll();
+    const { lists, broken } = await this.load();
     const duplicate = lists.find((list) => list.name === input.name);
     if (duplicate && !overwrite) throw new DuplicateListNameError(input.name);
 
@@ -55,19 +73,19 @@ export class ListService {
           updatedAt: timestamp,
         };
     const remaining = lists.filter((list) => list.id !== next.id);
-    await this.storage.set(STORAGE_KEYS.lists, [...remaining, next]);
+    await this.storage.set(STORAGE_KEYS.lists, [...remaining, next, ...broken]);
     return next;
   }
 
   public async update(list: SavedList, overwriteName = false): Promise<SavedList> {
-    const lists = await this.getAll();
+    const { lists, broken } = await this.load();
     const duplicate = lists.find((candidate) => candidate.name === list.name && candidate.id !== list.id);
     if (duplicate && !overwriteName) throw new DuplicateListNameError(list.name);
     const updated = { ...structuredClone(list), updatedAt: this.now().toISOString() };
     const remaining = lists.filter(
       (candidate) => candidate.id !== list.id && (overwriteName ? candidate.id !== duplicate?.id : true),
     );
-    await this.storage.set(STORAGE_KEYS.lists, [...remaining, updated]);
+    await this.storage.set(STORAGE_KEYS.lists, [...remaining, updated, ...broken]);
     return updated;
   }
 
@@ -87,14 +105,14 @@ export class ListService {
   }
 
   public async remove(id: string): Promise<void> {
-    const lists = await this.getAll();
-    await this.storage.set(STORAGE_KEYS.lists, lists.filter((list) => list.id !== id));
+    const { lists, broken } = await this.load();
+    await this.storage.set(STORAGE_KEYS.lists, [...lists.filter((list) => list.id !== id), ...broken]);
   }
 
   public async importList(list: SavedList, overwrite = false): Promise<void> {
     const validation = validateSavedList(list);
     if (!validation.ok) throw new StorageDataError("インポートするリストが不正です。", list);
-    const lists = await this.getAll();
+    const { lists, broken } = await this.load();
     const duplicate = lists.find((candidate) => candidate.id === list.id || candidate.name === list.name);
     if (duplicate && !overwrite) throw new DuplicateListNameError(list.name);
     await this.storage.set(
@@ -104,6 +122,7 @@ export class ListService {
           (candidate) => !overwrite || (candidate.id !== list.id && candidate.name !== list.name),
         ),
         structuredClone(list),
+        ...broken,
       ],
     );
   }

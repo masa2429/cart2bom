@@ -37,6 +37,27 @@ describe("ListService", () => {
     expect(await storage.get(STORAGE_KEYS.lists, null)).toEqual({ broken: true });
   });
 
+  it("壊れた1件で他のリストを巻き添えにしない", async () => {
+    const storage = new MemoryStorageProvider();
+    const service = createService(storage);
+    await service.create({ name: "部品", description: "", tags: [], items: [item] });
+    const stored = await storage.get<unknown[]>(STORAGE_KEYS.lists, []);
+    await storage.set(STORAGE_KEYS.lists, [{ id: "broken", schemaVersion: 99 }, ...stored]);
+
+    const loaded = await service.load();
+    expect(loaded.lists).toEqual([expect.objectContaining({ id: "list-1" })]);
+    expect(loaded.broken).toEqual([{ id: "broken", schemaVersion: 99 }]);
+  });
+
+  it("書き戻しても読み取れないデータを消さない", async () => {
+    const storage = new MemoryStorageProvider();
+    const service = createService(storage);
+    await storage.set(STORAGE_KEYS.lists, [{ id: "broken", schemaVersion: 99 }]);
+    const created = await service.create({ name: "部品", description: "", tags: [], items: [item] });
+    await service.remove(created.id);
+    expect(await storage.get(STORAGE_KEYS.lists, [])).toEqual([{ id: "broken", schemaVersion: 99 }]);
+  });
+
   it("リストを複製して削除する", async () => {
     let id = 0;
     const service = new ListService(

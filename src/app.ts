@@ -91,9 +91,19 @@ export function startCart2BOM(): void {
 
   const showLists = async (): Promise<void> => {
     try {
-      const lists = filterSavedListsByStore(await listService.getAll(), adapter.id);
+      const loaded = await listService.load();
+      const lists = filterSavedListsByStore(loaded.lists, adapter.id);
       openSavedLists(document, lists, {
         confirmBeforeDelete: settings.confirmBeforeDelete,
+        brokenCount: loaded.broken.length,
+        onBackupBroken: () => {
+          downloadText(
+            document,
+            `${JSON.stringify(loaded.broken, null, 2)}\n`,
+            `cart2bom-broken-data-${new Date().toISOString().replace(/[:.]/g, "-")}.json`,
+            "application/json",
+          );
+        },
         quickOrderAvailable: typeof adapter.createQuickOrderText === "function",
         quickOrderAutoFill: typeof adapter.fillQuickOrder === "function",
         quickOrderAutoSubmit: typeof adapter.submitQuickOrder === "function",

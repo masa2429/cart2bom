@@ -61,6 +61,34 @@ describe("openSavedLists", () => {
     expect(image?.alt).toBe("画像付き商品");
   });
 
+  it("読み取れない保存データの件数とバックアップ導線を表示する", () => {
+    const onBackupBroken = vi.fn();
+    const actions: SavedListActions = {
+      confirmBeforeDelete: true,
+      brokenCount: 2,
+      onBackupBroken,
+      onOpen: vi.fn(),
+      onDuplicate: vi.fn(async () => undefined),
+      onRename: vi.fn(async () => undefined),
+      onDelete: vi.fn(async () => undefined),
+      onExport: vi.fn(),
+      onCopyPlainText: vi.fn(async () => undefined),
+      onCopyShareUrl: vi.fn(async () => undefined),
+      onCopyQuickOrder: vi.fn(async () => undefined),
+      onOpenQuickOrder: vi.fn(async () => undefined),
+    };
+
+    openSavedLists(document, [list], actions);
+
+    expect(document.querySelector(".cart2bom-notice")?.textContent).toContain("2件");
+    // The readable list stays usable alongside the warning.
+    expect(document.querySelectorAll(".cart2bom-list-card")).toHaveLength(1);
+    Array.from(document.querySelectorAll("button"))
+      .find((button) => button.textContent === "読み取れないデータをJSON保存")
+      ?.click();
+    expect(onBackupBroken).toHaveBeenCalledOnce();
+  });
+
   it("非対応店舗では秋月一括注文ボタンを表示しない", () => {
     const actions: SavedListActions = {
       confirmBeforeDelete: true,

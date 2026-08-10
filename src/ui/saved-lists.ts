@@ -5,6 +5,9 @@ import { createProductImage } from "./product-image";
 
 export interface SavedListActions {
   confirmBeforeDelete: boolean;
+  /** Number of stored entries Cart2BOM could not read. They are kept, not deleted. */
+  brokenCount?: number;
+  onBackupBroken?(): void;
   quickOrderAvailable?: boolean;
   quickOrderAutoFill?: boolean;
   quickOrderAutoSubmit?: boolean;
@@ -61,6 +64,17 @@ export function openSavedLists(
   const status = targetDocument.createElement("p");
   status.className = "cart2bom-error";
   status.setAttribute("role", "alert");
+  if (actions.brokenCount) {
+    const notice = targetDocument.createElement("p");
+    notice.className = "cart2bom-notice";
+    notice.textContent = `読み取れない保存データが${actions.brokenCount}件あります。削除はしていません。他のリストはそのまま利用できます。`;
+    modal.content.append(notice);
+    if (actions.onBackupBroken) {
+      const backup = createButton(targetDocument, "読み取れないデータをJSON保存");
+      backup.addEventListener("click", () => actions.onBackupBroken?.());
+      modal.content.append(backup);
+    }
+  }
   if (lists.length === 0) {
     const empty = targetDocument.createElement("p");
     empty.className = "cart2bom-empty-state";
