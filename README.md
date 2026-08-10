@@ -126,6 +126,8 @@ npm test
 npm run build:all
 ```
 
+`npm test`はTypeScriptの型検査（`npm run typecheck`）を実行してから単体テストを実行します。型検査だけを行う場合は`npm run typecheck`を使用します。
+
 配布用UserScriptは`dist/cart2bom.user.js`、GitHub Pages用ファイルは`pages-dist`へ生成されます。開発用ソースマップが必要な場合は`npm run build:dev`を使用します。`main`ブランチへのpush時は、テストと両方のビルドに成功した場合だけGitHub Pagesを更新します。
 
 ## ライセンス

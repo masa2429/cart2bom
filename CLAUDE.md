@@ -45,8 +45,8 @@ Step 1〜8の初期実装は完了済み。現在は機能追加・改善・保�
 ## ビルドと実行
 
 - 依存導入: `npm install`
-- テスト: `npm test`（Vitest。ミスミのアダプターテストは待機を含むため十数秒かかる）
-- 型検査: `npx tsc --noEmit` — **esbuildは型を検査しない**ので、コード変更後は必ず実行する
+- テスト: `npm test`（型検査 → Vitest の順に実行する）
+- 型検査のみ: `npm run typecheck` — **esbuildは型を検査しない**ので、型の確認はここでしか行われない
 - UserScriptビルド: `npm run build`（ソースマップ付きは`npm run build:dev`）
 - Pagesビルド: `npm run build:pages`
 - 両方: `npm run build:all`

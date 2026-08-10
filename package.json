@@ -16,7 +16,8 @@
     "build:dev": "node scripts/build.mjs --development",
     "build:pages": "node scripts/build-pages.mjs",
     "build:all": "npm run build && npm run build:pages",
-    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "test": "npm run typecheck && vitest run",
     "test:watch": "vitest"
   },
   "devDependencies": {
