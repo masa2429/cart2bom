@@ -1,4 +1,6 @@
+import type { ExtractionWarning } from "./adapters/adapter";
 import { findAdapter } from "./adapters/registry";
+import { deduplicateItems } from "./core/deduplicate";
 import { DuplicateListNameError, StorageDataError } from "./core/errors";
 import { ListService } from "./core/list-service";
 import { DEFAULT_SETTINGS, type AppSettings, type SavedList } from "./core/models";
@@ -230,12 +232,25 @@ export function startCart2BOM(): void {
           );
           return;
         }
-        if (result.warnings.length > 0) {
-          showToast(document, `${result.items.length}商品を取得しました。警告の詳細を確認画面に表示しました。`);
+        // Spec 16: merge rows that share storeId + orderCode before the user edits them.
+        const deduplicated = deduplicateItems(result.items);
+        const mergedCount = result.items.length - deduplicated.items.length;
+        const warnings: ExtractionWarning[] = [
+          ...result.warnings,
+          ...(mergedCount > 0
+            ? [{
+                code: "duplicate-merged",
+                message: `同一商品${mergedCount}件を1行へまとめ、数量を合算しました。`,
+              }]
+            : []),
+          ...deduplicated.warnings.map((message) => ({ code: "duplicate-conflict", message })),
+        ];
+        if (warnings.length > 0) {
+          showToast(document, `${deduplicated.items.length}商品を取得しました。警告の詳細を確認画面に表示しました。`);
         }
         openCartEditor(document, {
-          items: result.items,
-          warnings: result.warnings,
+          items: deduplicated.items,
+          warnings,
           defaultListNamePrefix: adapter.listNamePrefix,
           onSave: saveNewList,
         });

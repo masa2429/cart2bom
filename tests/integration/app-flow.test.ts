@@ -78,6 +78,26 @@ describe("Cart2BOM app flow", () => {
     });
   });
 
+  it("同一通販コードの行を1行へまとめ、数量を合算する", async () => {
+    installMemoryGm(new Map<string, unknown>());
+    const row = document.querySelector("tr.block-cart--goods-list");
+    if (!row?.parentElement) throw new Error("カート行を確認できませんでした。");
+    row.parentElement.append(row.cloneNode(true));
+
+    startCart2BOM();
+    document.getElementById("cart2bom-floating-button")?.click();
+    buttonByText("現在のカートを読み取る").click();
+
+    await vi.waitFor(() => {
+      expect(document.querySelector<HTMLInputElement>('input[aria-label="リスト名"]')).not.toBeNull();
+    });
+    // Two rows of 105148 (quantity 2 each) become one row of 4.
+    expect(document.querySelectorAll('input[aria-label="105148の数量"]')).toHaveLength(1);
+    expect(document.querySelector<HTMLInputElement>('input[aria-label="105148の数量"]')?.value).toBe("4");
+    expect(document.querySelector(".cart2bom-warning-details")?.textContent)
+      .toContain("同一商品1件を1行へまとめ、数量を合算しました。");
+  });
+
   it("JSONテキストを検証してGMストレージへインポートする", async () => {
     const values = new Map<string, unknown>();
     installMemoryGm(values);
