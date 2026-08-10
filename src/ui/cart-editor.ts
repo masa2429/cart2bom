@@ -1,5 +1,6 @@
 import type { CartItem, SavedList } from "../core/models";
 import type { ExtractionWarning } from "../adapters/adapter";
+import { safeHttpsUrl } from "../core/safe-url";
 import { calculateListTotal, formatListTotal } from "../core/totals";
 import { validateQuantity } from "../core/validation";
 import { createButton, openModal } from "./modal";
@@ -129,22 +130,31 @@ export function openCartEditor(targetDocument: Document, options: CartEditorOpti
     quantity.step = "1";
     const note = textarea(targetDocument, item.note, `${item.orderCode}の備考`);
     note.className = "cart2bom-item-note";
-    const link = targetDocument.createElement("a");
-    link.href = item.productUrl;
-    link.target = "_blank";
-    link.rel = "noopener noreferrer";
+    // Falls back to plain text when the stored URL is not HTTPS, so an imported
+    // or shared list cannot turn the product link into a javascript: URL.
+    const productUrl = safeHttpsUrl(item.productUrl);
+    const link = targetDocument.createElement(productUrl === null ? "span" : "a");
+    if (productUrl !== null && link instanceof HTMLAnchorElement) {
+      link.href = productUrl;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+    }
     link.textContent = "商品ページ";
     const product = targetDocument.createElement("div");
     product.className = "cart2bom-editor-product";
     const image = createProductImage(targetDocument, item);
     const imageArea = targetDocument.createElement("div");
     imageArea.className = "cart2bom-editor-product-image";
-    if (image) {
-      const imageLink = link.cloneNode(true) as HTMLAnchorElement;
-      imageLink.textContent = "";
+    if (image && productUrl !== null) {
+      const imageLink = targetDocument.createElement("a");
+      imageLink.href = productUrl;
+      imageLink.target = "_blank";
+      imageLink.rel = "noopener noreferrer";
       imageLink.setAttribute("aria-label", `${item.name}の商品ページを開く`);
       imageLink.append(image);
       imageArea.append(imageLink);
+    } else if (image) {
+      imageArea.append(image);
     } else {
       imageArea.textContent = "—";
     }

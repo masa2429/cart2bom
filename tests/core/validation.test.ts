@@ -55,6 +55,12 @@ describe("validation", () => {
     expect(validateCartItem(item).ok).toBe(true);
   });
 
+  it("HTTPS以外の商品URLを拒否する", () => {
+    for (const productUrl of ["javascript:alert(1)", "data:text/html,x", "http://example.test/", "/catalog/g/g105148/"]) {
+      expect(validateCartItem({ ...item, productUrl }).ok).toBe(false);
+    }
+  });
+
   it("不正なJSONを拒否する", () => {
     expect(parseSavedListJson("{broken").ok).toBe(false);
   });

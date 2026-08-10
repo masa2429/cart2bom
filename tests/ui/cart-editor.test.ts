@@ -12,6 +12,15 @@ const item: CartItem = {
 describe("openCartEditor", () => {
   beforeEach(() => document.body.replaceChildren());
 
+  it("HTTPS以外の商品URLをリンクにしない", () => {
+    const hostile: CartItem = { ...item, productUrl: "javascript:alert(document.domain)", imageUrl: null };
+    openCartEditor(document, { items: [hostile], onSave: vi.fn(async () => undefined) });
+    expect(Array.from(document.querySelectorAll("a"), (anchor) => anchor.getAttribute("href")))
+      .not.toContain("javascript:alert(document.domain)");
+    const label = Array.from(document.querySelectorAll("span")).find((node) => node.textContent === "商品ページ");
+    expect(label).toBeDefined();
+  });
+
   it("商品名をHTMLとして解釈せず、編集値を保存する", async () => {
     const onSave = vi.fn(async () => undefined);
     openCartEditor(document, { items: [item], onSave });

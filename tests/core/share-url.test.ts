@@ -97,4 +97,13 @@ describe("共有URL", () => {
     const url = new URL("https://akizukidenshi.com/#cart2bom=j.invalid-");
     await expect(readSharedListUrl(url)).rejects.toThrow("共有");
   });
+
+  it("HTTPS以外の商品URLを含む共有リストを拒否する", async () => {
+    const hostile: SavedList = {
+      ...list,
+      items: [{ ...list.items[0]!, productUrl: "javascript:alert(document.domain)" }],
+    };
+    const url = new URL(await createSharedListUrl(hostile, "https://masa2429.github.io/cart2bom/share/"));
+    await expect(readSharedListUrl(url)).rejects.toThrow("商品URL");
+  });
 });

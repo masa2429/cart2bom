@@ -746,6 +746,7 @@ export function exportQuickOrderBatches(
 - HTML文字列を表示するときはエスケープする
 - `innerHTML`の利用を最小限にする
 - 保存データのインポート時に型検証を行う
+- 商品URLはHTTPSだけを受理する．共有URLとインポートJSONは外部から届くため，検証で拒否したうえで，表示側でもHTTPS以外を`href`へ渡さずリンクにしない．`javascript:`が通販サイトのオリジンで実行されることを防ぐ
 
 ### 18.2．外部通信
 

@@ -4,6 +4,7 @@ import {
   type CartItem,
   type SavedList,
 } from "./models";
+import { isHttpsUrl } from "./safe-url";
 
 export interface ValidationIssue {
   path: string;
@@ -68,8 +69,13 @@ export function validateCartItem(
     }
   };
 
-  for (const key of ["id", "storeId", "storeName", "name", "productUrl", "capturedAt"] as const) {
+  for (const key of ["id", "storeId", "storeName", "name", "capturedAt"] as const) {
     requireString(key);
+  }
+  // Rejected here rather than only at render time, so a hostile shared list
+  // cannot carry a javascript: URL into storage.
+  if (!isHttpsUrl(value.productUrl)) {
+    issues.push({ path: `${path}.productUrl`, message: "商品URLはHTTPSのURLである必要があります。" });
   }
   if (!validateOrderCode(typeof value.storeId === "string" ? value.storeId : "", value.orderCode)) {
     issues.push({ path: `${path}.orderCode`, message: "通販コードが不正です。" });

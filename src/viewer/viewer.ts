@@ -1,5 +1,6 @@
 import { getAdapters } from "../adapters/registry";
 import type { SavedList } from "../core/models";
+import { safeHttpsUrl } from "../core/safe-url";
 import { calculateListTotal, formatListTotal } from "../core/totals";
 import { exportCsv } from "../exporters/csv";
 import { copyText, downloadText, safeFileName } from "../exporters/download";
@@ -32,15 +33,6 @@ function button(targetDocument: Document, text: string, kind = "secondary"): HTM
   const value = element(targetDocument, "button", `viewer-button viewer-button-${kind}`, text);
   value.type = "button";
   return value;
-}
-
-function safeHttpsUrl(value: string): string | null {
-  try {
-    const url = new URL(value);
-    return url.protocol === "https:" ? url.href : null;
-  } catch {
-    return null;
-  }
 }
 
 function yen(value: number | null): string {
