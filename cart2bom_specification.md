@@ -1,11 +1,12 @@
 # Cart2BOM 仕様書
 
-- 文書バージョン：0.2
+- 文書バージョン：0.3
 - 実装方式：UserScript
-- 初期対応：秋月電子通商
-- 将来対応：モノタロウ，ミスミ
+- 対応サイト：秋月電子通商，モノタロウ，ミスミ（いずれも実装済み）
 - 想定実行環境：Tampermonkey／Violentmonkey，Chrome／Edge／Firefox
 - 開発方針：AkiBoostの操作感を参考にするが，コードは独自実装する
+
+本書は0.3で実装状況へ同期した．MVP（26．実装順序のStep 1〜8），Phase 2のモノタロウ，Phase 3のミスミは実装済みである．未実装項目と既知の制限は「32．実装状況と既知の制限」にまとめる．
 
 ---
 
@@ -86,31 +87,32 @@ dist/cart2bom.user.js
 
 GitHubのRaw URLからインストールできるようにする．
 
-UserScriptヘッダーの例：
+UserScriptヘッダーは`scripts/build.mjs`が生成し，`@version`は`package.json`の`version`を埋め込む．
 
 ```javascript
 // ==UserScript==
 // @name         Cart2BOM
 // @namespace    cart2bom
-// @version      0.2.3
+// @version      <package.jsonのversion>
 // @author       morita_masato
 // @description  通販サイトのカートを保存・共有・再利用します
+// @homepageURL  https://github.com/masa2429/cart2bom
+// @supportURL   https://github.com/masa2429/cart2bom/issues
 // @match        https://akizukidenshi.com/*
 // @match        https://www.akizukidenshi.com/*
+// @match        https://monotaro.com/*
 // @match        https://www.monotaro.com/*
 // @match        https://jp.misumi-ec.com/*
 // @run-at       document-idle
 // @grant        GM.getValue
 // @grant        GM.setValue
 // @grant        GM.deleteValue
-// @grant        GM.download
-// @grant        GM_info
 // @updateURL    https://raw.githubusercontent.com/masa2429/cart2bom/main/dist/cart2bom.user.js
 // @downloadURL  https://raw.githubusercontent.com/masa2429/cart2bom/main/dist/cart2bom.user.js
 // ==/UserScript==
 ```
 
-不要な権限は付与しない．実装上不要であれば`GM.download`も削除する．
+不要な権限は付与しない．ファイル保存は`a[download]`で実装しているため，`GM.download`と`GM_info`は付与しない．
 
 ### 5.2．ブックマークレット
 
@@ -155,15 +157,15 @@ AkiBoostはUIと利用方法の参考にとどめる．ライセンスが明確�
 
 ### 7.1．MVP
 
-- 秋月電子通商
+- 秋月電子通商（実装済み）
 
 ### 7.2．Phase 2
 
-- モノタロウ
+- モノタロウ（実装済み）
 
 ### 7.3．Phase 3
 
-- ミスミ
+- ミスミ（実装済み）
 
 ### 7.4．将来候補
 
@@ -217,20 +219,16 @@ AkiBoostはUIと利用方法の参考にとどめる．ライセンスが明確�
 
 カート読み取り後，モーダル画面に表を表示する．
 
-表示列：
+表示列は，横スクロールを避けるため次の6列へ集約する．
 
 - 選択
-- 通販コード
-- 商品名
-- 商品画像
-- メーカー名
-- メーカー型番
-- 販売単位
+- 商品
 - 数量
-- 単価
-- 小計
+- 金額
 - 備考
-- 商品ページ
+- 削除
+
+「商品」列には商品画像，通販コード，商品名，商品ページへのリンクを表示し，メーカー名とメーカー型番は`details`を開いたときに編集する．「数量」列には数量と販売単位，「金額」列には単価と小計を表示する．見出しのチェックボックスで全商品の選択を切り替える．
 
 編集可能項目：
 
@@ -263,17 +261,14 @@ AkiBoostはUIと利用方法の参考にとどめる．ライセンスが明確�
 
 ### 8.5．保存済みリスト
 
-保存済みリスト画面で，次の操作を行える．
+保存済みリスト画面には，現在表示している店舗の商品を含むリストだけを表示する．各リストで次の操作を行える．
 
 - 開く
-- 名前変更
-- 複製
-- 削除
-- CSV出力
-- TSV出力
-- JSON出力
-- 秋月一括注文形式をコピー
-- 秋月一括注文画面を開く
+- バスケットへ追加（現在の店舗の商品を，店舗の一括入力機能でカートへ戻す）
+- 出力：共有URLのコピー，平文のコピー，CSV，TSV，JSON，Markdown，店舗用の一括注文テキスト
+- その他：名前変更，複製，削除
+
+操作数が多いため，「出力」と「その他」はまとめて開く形にする．店舗の一括入力に対応していない場合は，該当する操作を表示しない．
 
 ### 8.6．出力
 
@@ -438,8 +433,11 @@ export interface AppSettings {
   buttonSide: "left" | "right";
   confirmBeforeDelete: boolean;
   defaultExportFormat: "csv" | "tsv" | "json" | "quickOrder";
+  theme: "auto" | "light" | "dark";
 }
 ```
+
+`theme`は`auto`でOSの配色設定へ追従する．GitHub Pagesの共有画面とインストール画面も，OS設定へ自動追従する．
 
 ---
 
@@ -453,7 +451,10 @@ UserScriptの`GM.getValue`と`GM.setValue`を利用する．
 cart2bom.settings
 cart2bom.lists
 cart2bom.migrations
+cart2bom.pendingQuickOrder
 ```
+
+`cart2bom.pendingQuickOrder`は，一括入力の進行状態を店舗のページ遷移をまたいで保持する一時領域である．処理の完了時と中断時に削除する．
 
 ストレージ処理は，次のインターフェースへ分離する．
 
@@ -489,16 +490,33 @@ type Migration = (value: unknown) => unknown;
 export interface StoreAdapter {
   readonly id: string;
   readonly name: string;
+  readonly listNamePrefix: string;
 
   matches(url: URL): boolean;
   isCartPage(url: URL, document: Document): boolean;
   getCartUrl(): string | null;
 
+  prepareCart?(document: Document): Promise<void>;
   extractCart(document: Document): CartExtractionResult;
+
+  readonly quickOrderCodeRequirement?: string;
+  readonly quickOrderCapacity?: number;
+  validateQuickOrderCode?(code: string): boolean;
   createQuickOrderText?(items: CartItem[]): string;
   getQuickOrderUrl?(): string | null;
+  isQuickOrderPage?(url: URL, document: Document): boolean;
+  fillQuickOrder?(document: Document, text: string): number | Promise<number>;
+  submitQuickOrder?(document: Document, text: string): number | Promise<number>;
 }
 ```
+
+一括入力に関する任意メンバーは，店舗が対応する範囲だけを実装する．共通UIは，実装されているメンバーの有無から利用できる操作を決める．
+
+- `prepareCart`：読み取り前に非同期の価格照会などを待つ．ミスミで使用する
+- `quickOrderCapacity`：1回の送信で扱える商品数．超える分はバッチへ分割する
+- `validateQuickOrderCode`と`quickOrderCodeRequirement`：注文コードの形式検査と，失敗時に表示する要件文
+- `fillQuickOrder`：一括入力欄への入力までを行う
+- `submitQuickOrder`：入力から送信までを行い，バスケットへの追加まで進める
 
 ```typescript
 export interface CartExtractionResult {
@@ -601,7 +619,7 @@ https://akizukidenshi.com/catalog/g/g105148/
 
 ## 14．モノタロウアダプター
 
-Phase 2で実装する．MVPでは型定義と空のアダプターファイルだけ用意してよい．
+Phase 2として実装済み．`/basket/`のバスケットを読み取り，保存リストから`/quick-order/`へ10商品ずつ送信してバスケットへ復元する．注文コードは8桁の数字とする．
 
 取得候補：
 
@@ -687,7 +705,13 @@ export function exportQuickOrder(
   list: SavedList,
   adapter: StoreAdapter
 ): string;
+export function exportQuickOrderBatches(
+  list: SavedList,
+  adapter: StoreAdapter
+): string[];
 ```
+
+一括注文の出力は，アダプターの店舗の商品だけを対象とし，注文コードと数量を検証してから同一コードの数量を合算する．検証に失敗した行は`QuickOrderValidationError`へまとめて返し，出力前に一覧表示する．`exportQuickOrderBatches`は`quickOrderCapacity`の単位でバッチへ分割する．
 
 ファイル保存処理と文字列生成処理は分離する．これにより単体テストしやすくする．
 
@@ -812,13 +836,13 @@ Cart2BOMが表示する情報は，読み取り時点のページ内容に基づ
 
 ### 21.2．ビルド
 
-- Node.js環境でビルドする
-- TypeScriptを1本のUserScriptへバンドルする
-- 出力は`dist/cart2bom.user.js`
-- ソースマップは開発用だけ生成する
-- 依存関係のバージョンはロックファイルで固定する
-
-特定のビルドツールへ強く依存しない．Codexは，構成が簡潔で保守しやすいツールを選定してよい．
+- Node.js 20以降でビルドする
+- esbuildでTypeScriptを1本のUserScriptへバンドルする
+- 出力は`dist/cart2bom.user.js`．生成物をリポジトリへコミットし，`@downloadURL`から直接配布する
+- 共有画面は別バンドルとし，`pages-dist/`へ出力する．こちらは生成物をコミットせず，GitHub Actionsが再生成する
+- ソースマップは開発用（`npm run build:dev`）だけ生成する
+- 依存関係のバージョンは`package-lock.json`で固定する
+- esbuildは型を検査しないため，型検査は`tsc --noEmit`で別に実行する．`npm test`は型検査のあとに単体テストを実行する
 
 ### 21.3．テスト
 
@@ -836,20 +860,34 @@ Cart2BOMが表示する情報は，読み取り時点のページ内容に基づ
 cart2bom/
 ├─ README.md
 ├─ LICENSE
+├─ CLAUDE.md                     エージェント向けの作業ルール
+├─ agent.md                      同上（Codex向け．ミスの記録の共有ログを含む）
+├─ cart2bom_specification.md     本書
+├─ akizuki_cart_bookmarklet.html 秋月用の試作．参考資料
 ├─ package.json
 ├─ package-lock.json
 ├─ tsconfig.json
+├─ vitest.config.ts
+├─ .github/
+│  └─ workflows/
+│     └─ pages.yml               テストと両ビルドの成功時だけPagesを更新する
 ├─ docs/
-│  └─ specification.md
+│  ├─ images/                    READMEの手順図（SVG）
+│  ├─ manual-testing.md          手動テスト手順
+│  └─ manual-test-results.md     実サイトでの確認記録
 ├─ src/
 │  ├─ entry.user.ts
 │  ├─ app.ts
+│  ├─ globals.d.ts               ビルド時に定義する定数の型
 │  ├─ core/
 │  │  ├─ models.ts
 │  │  ├─ validation.ts
-│  │  ├─ storage.ts
 │  │  ├─ list-service.ts
+│  │  ├─ settings-service.ts
 │  │  ├─ deduplicate.ts
+│  │  ├─ totals.ts
+│  │  ├─ share-url.ts
+│  │  ├─ pending-quick-order.ts
 │  │  └─ errors.ts
 │  ├─ adapters/
 │  │  ├─ adapter.ts
@@ -858,40 +896,55 @@ cart2bom/
 │  │  ├─ monotaro.ts
 │  │  └─ misumi.ts
 │  ├─ exporters/
+│  │  ├─ columns.ts
 │  │  ├─ csv.ts
 │  │  ├─ tsv.ts
 │  │  ├─ json.ts
 │  │  ├─ markdown.ts
-│  │  └─ quick-order.ts
+│  │  ├─ plain-text.ts
+│  │  ├─ quick-order.ts
+│  │  └─ download.ts
 │  ├─ storage/
 │  │  ├─ provider.ts
 │  │  ├─ gm-storage.ts
 │  │  └─ memory-storage.ts
-│  └─ ui/
-│     ├─ styles.ts
-│     ├─ floating-button.ts
-│     ├─ menu.ts
-│     ├─ cart-editor.ts
-│     ├─ saved-lists.ts
-│     ├─ settings.ts
-│     ├─ modal.ts
-│     └─ toast.ts
+│  ├─ ui/
+│  │  ├─ styles.ts
+│  │  ├─ floating-button.ts
+│  │  ├─ main-menu.ts
+│  │  ├─ modal.ts
+│  │  ├─ cart-editor.ts
+│  │  ├─ saved-lists.ts
+│  │  ├─ settings.ts
+│  │  ├─ import-dialog.ts
+│  │  ├─ shared-list-dialog.ts
+│  │  ├─ product-image.ts
+│  │  └─ toast.ts
+│  └─ viewer/                    GitHub Pages用．UserScriptとは別バンドル
+│     ├─ main.ts
+│     ├─ viewer.ts
+│     ├─ styles.css
+│     ├─ index.html              共有画面
+│     ├─ install.html            インストール案内
+│     └─ root.html               入口
 ├─ tests/
-│  ├─ fixtures/
-│  │  └─ akizuki-cart.html
+│  ├─ fixtures/                  匿名化した実カートHTML
 │  ├─ adapters/
-│  │  └─ akizuki.test.ts
+│  ├─ core/
 │  ├─ exporters/
-│  │  ├─ csv.test.ts
-│  │  └─ quick-order.test.ts
-│  └─ core/
-│     ├─ deduplicate.test.ts
-│     └─ validation.test.ts
+│  ├─ storage/
+│  ├─ ui/
+│  ├─ viewer/
+│  └─ integration/
 ├─ scripts/
-│  └─ build.mjs
-└─ dist/
-   └─ cart2bom.user.js
+│  ├─ build.mjs                  UserScript
+│  └─ build-pages.mjs            GitHub Pages
+├─ dist/
+│  └─ cart2bom.user.js           コミットする生成物
+└─ pages-dist/                   生成物．gitignore対象
 ```
+
+`src/viewer/`はGM APIのないブラウザで動くため，`src/storage/`と`src/app.ts`へ依存しない．共有する処理は`core/`，`exporters/`，`adapters/`，`ui/product-image.ts`に限る．
 
 ---
 
@@ -948,23 +1001,26 @@ cart2bom/
 
 ### 24.2．手動テスト
 
-- Chrome＋Tampermonkey
-- Edge＋Tampermonkey
-- Firefox＋Violentmonkey
-- 秋月へログインしている状態
-- 秋月へログインしていない状態
+手順は`docs/manual-testing.md`，実施結果は`docs/manual-test-results.md`へ記録する．
+
+- Chrome＋Tampermonkey（確認済み）
+- Edge＋Tampermonkey（未確認）
+- Firefox＋Violentmonkey（未確認）
+- 各店舗へログインしている状態
+- 各店舗へログインしていない状態
 - 商品数1件
 - 商品数10件以上
 - 数量変更後
 - 保存，削除，複製
 - JSONエクスポート／インポート
-- 一括注文テキストの貼り付け
+- 共有URLの発行と，Cart2BOM未導入ブラウザでの表示
+- 一括入力によるカートへの復元
 
 ---
 
 ## 25．MVP完了条件
 
-次の条件をすべて満たしたとき，MVP完了とする．
+次の条件はすべて達成済みである．MVPは完了とし，本節は達成基準の記録として残す．
 
 - UserScriptとしてインストールできる
 - 秋月電子のページに固定ボタンが表示される
@@ -985,7 +1041,7 @@ cart2bom/
 
 ## 26．実装順序
 
-Codexは，次の順序で実装する．各段階でテストを通してから次へ進む．
+Step 1からStep 8まで実施済み．本節は実装の履歴として残す．新しい機能を追加するときは，同じ粒度（実装，単体テスト，型検査，ビルド，結果確認）で進める．
 
 ### Step 1：プロジェクト初期化
 
@@ -1072,11 +1128,11 @@ npm run build
 
 ---
 
-## 27．Codexへの実装指示
+## 27．エージェントへの実装指示
 
-Codexは，次の方針を守ること．
+CodexとClaudeは，次の方針を守ること．日常の作業ルールは`agent.md`と`CLAUDE.md`にもまとめてある．
 
-1. まずリポジトリ全体を確認し，既存ファイルを不用意に削除しない．
+1. まずリポジトリ全体と本書の該当箇所を確認し，既存ファイルを不用意に削除しない．
 2. 本仕様と既存コードが矛盾する場合は，本仕様を優先し，変更点をREADMEまたはコミット相当の説明へ記載する．
 3. 一度に全機能を実装せず，前節のStep単位で進める．
 4. 各Step完了時にビルドとテストを実行する．
@@ -1089,7 +1145,9 @@ Codexは，次の方針を守ること．
 
 ---
 
-## 28．Codexへ最初に渡す作業指示例
+## 28．初期実装時の作業指示例
+
+以下は実施済みの指示である．同じ形式で新しい作業を切り出すときの雛形として残す．
 
 ```text
 docs/specification.mdを読み，Cart2BOMのMVPを実装してください．
@@ -1129,7 +1187,7 @@ Step 4からStep 6までを実装してください．
 
 ## 29．Phase 2以降
 
-### Phase 2：モノタロウ
+### Phase 2：モノタロウ（完了）
 
 - 実際のカートHTML構造を調査
 - fixtureを作成
@@ -1137,7 +1195,7 @@ Step 4からStep 6までを実装してください．
 - 共通CSVへ変換
 - 必要に応じて動的DOM更新へ対応
 
-### Phase 3：ミスミ
+### Phase 3：ミスミ（完了）
 
 - ミスミ型番と選定仕様の扱いを決定
 - カートHTML構造を調査
@@ -1145,7 +1203,7 @@ Step 4からStep 6までを実装してください．
 - ミスミアダプターを実装
 - 公式アップロード形式への変換可否を確認
 
-### Phase 4：複数店舗統合
+### Phase 4：複数店舗統合（未着手）
 
 - 異なる店舗の商品を1リストへ追加
 - 店舗別集計
@@ -1153,7 +1211,9 @@ Step 4からStep 6までを実装してください．
 - 全店舗共通CSV
 - 購入依頼書用Markdown
 
-### Phase 5：BOM連携
+複数店舗の商品を1リストへ保持すること自体は，`CartItem.storeId`により現在のデータモデルで表現できる．未対応なのは，保存済みリストの表示を現在の店舗で絞り込んでいる点，および店舗別集計と店舗別出力をUserScript側へ用意していない点である．共有画面には店舗別件数と絞り込みが実装済みであり，これを参考にできる．
+
+### Phase 5：BOM連携（未着手）
 
 - KiCad BOMインポート
 - メーカー型番による照合
@@ -1182,3 +1242,28 @@ Cart2BOM
 ```text
 複数通販サイトのカートを，保存・共有可能な部品リストへ変換するUserScript
 ```
+
+---
+
+## 32．実装状況と既知の制限
+
+### 32.1．実装済み
+
+- MVP（25．MVP完了条件のすべて）
+- 秋月電子通商，モノタロウ，ミスミのカート読み取りと，一括入力によるカートへの復元
+- 共有URL（17.1）と，GitHub Pages上の共有画面・インストール案内画面
+- 平文共有（17.2），Markdown出力，合計金額の表示
+- JSONインポート（ファイルとテキスト），破損データのバックアップ出力
+- 表示テーマ（自動／ライト／ダーク）
+
+### 32.2．未実装項目と既知の制限
+
+- スキーママイグレーションは未実装である．`cart2bom.migrations`キーとマイグレーション関数の型は定義しているが適用処理がなく，`schemaVersion`が現行値と一致しないデータは検証で拒否する．スキーマを変更する場合は，先に適用処理を実装する
+- `AppSettings.defaultExportFormat`は保存と検証の対象だが，設定画面にも出力処理にも接続していない．UIを用意するか，項目を削除するか決める必要がある
+- `StoreAdapter.fillQuickOrder`はどのアダプターも実装しておらず，対応する分岐は現在使われていない
+- 保存済みリストは現在表示している店舗で絞り込むため，複数店舗の商品を1画面で扱えない（Phase 4）
+- CSVインポートは未実装である（8.8）
+- 動作確認はChrome＋Tampermonkeyのみである．Edge＋TampermonkeyとFirefox＋Violentmonkeyは未確認である
+- スマートフォンには対応しない（4）
+- 共有URLは商品数に比例して長くなる．エンコード後100,000文字を超える場合は拒否する．長い場合は平文またはJSONファイルを使う
+- 通販サイトのDOM変更で読み取りと復元が停止しうる．特にミスミは非同期描画と画面遷移が多く，過去の不具合も集中している．変更時は`agent.md`の「ミスの記録」を確認する

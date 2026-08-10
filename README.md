@@ -23,6 +23,8 @@ ChromeとTampermonkeyの組み合わせで動作を確認しています。ス�
 
 ## インストール方法
 
+[インストール手順のページ](https://masa2429.github.io/cart2bom/install/)から、Tampermonkeyの導入とCart2BOMの追加を順に進められます。手順は次のとおりです。
+
 1. Chromeへ[Tampermonkey](https://www.tampermonkey.net/)をインストールします。
 2. [Cart2BOMをインストール](https://raw.githubusercontent.com/masa2429/cart2bom/main/dist/cart2bom.user.js)を開きます。
 3. Tampermonkeyの確認画面で「インストール」を押します。
