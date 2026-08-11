@@ -200,7 +200,11 @@ function createStoreActions(
   shareUrl: string,
 ): HTMLElement {
   const container = element(targetDocument, "section", "viewer-store-actions");
-  container.append(element(targetDocument, "h2", "viewer-section-title", "店舗で注文する"));
+  container.append(
+    element(targetDocument, "h2", "viewer-section-title", "店舗で注文する"),
+    // Stated once here instead of repeating it in every store panel.
+    element(targetDocument, "p", "viewer-muted", "Cart2BOM導入済みなら、カートへの追加まで自動で進みます。"),
+  );
   let supportedStoreCount = 0;
   for (const adapter of getAdapters()) {
     const items = selectedList.items.filter((item) => item.storeId === adapter.id);
@@ -211,7 +215,7 @@ function createStoreActions(
       targetDocument,
       "p",
       "viewer-muted",
-      "Cart2BOM未導入の場合は、入力データをコピーして公式画面へ貼り付けてください。",
+      "コピーして公式画面へ貼り付けてください。",
     );
     panel.append(
       element(targetDocument, "h3", undefined, `${adapter.name}（${items.length}商品）`),
@@ -224,15 +228,14 @@ function createStoreActions(
       const quickOrderUrl = adapter.getQuickOrderUrl?.();
       if (adapter.id === "monotaro") {
         hasCombinedAction = true;
-        guidance.textContent =
-          "一括入力欄がある場合は全商品を一度にコピーできます。通常のクイックオーダーでは、下の値をq0/p0から順に貼り付けてください。";
-        const copyAll = button(targetDocument, "一括入力用データをコピー");
+        guidance.textContent = "クイックオーダーのq0・p0から順に貼り付けてください。";
+        const copyAll = button(targetDocument, "全商品をコピー");
         copyAll.addEventListener("click", () => {
           const bulkText = batches.join("\n").replace(/\t/g, " ");
           void copyText(targetDocument, bulkText).then(() => {
             copyAll.classList.add("viewer-copy-done");
-            copyAll.textContent = "✓ 一括入力用データをコピー済み";
-            status.textContent = "注文コードと数量を一括コピーしました。一括入力欄へ貼り付けてください。";
+            copyAll.textContent = "✓ コピー済み";
+            status.textContent = "コピーしました。一括入力欄へ貼り付けてください。";
           }).catch((caught: unknown) => {
             status.textContent = caught instanceof Error ? caught.message : "コピーできませんでした。";
           });
@@ -266,7 +269,7 @@ function createStoreActions(
           targetDocument,
           "a",
           "viewer-button viewer-button-primary",
-          "入力済みの一括注文画面を開く",
+          "入力済みの画面を開く",
         );
         proceed.href = createSharedQuickOrderUrl(
           shareUrl,
@@ -275,8 +278,7 @@ function createStoreActions(
         );
         proceed.target = "_blank";
         proceed.rel = "noopener noreferrer";
-        guidance.textContent =
-          "ブランケットオーダーを入力済みの状態で開きます。Cart2BOM導入済みならバスケットへの追加まで自動で進めます。";
+        guidance.textContent = "ブランケットオーダーが入力済みで開きます。";
         actions.append(proceed);
       } else if (adapter.id === "misumi" && supportsSharedAutoFill && quickOrderUrl) {
         hasCombinedAction = true;
@@ -284,26 +286,25 @@ function createStoreActions(
           targetDocument,
           "a",
           "viewer-button viewer-button-primary",
-          "入力データをコピーしてミスミを開く",
+          "コピーして開く",
         );
         proceed.href = createSharedQuickOrderUrl(shareUrl, quickOrderUrl, adapter.id);
         proceed.target = "_blank";
         proceed.rel = "noopener noreferrer";
         proceed.addEventListener("click", () => {
           void copyText(targetDocument, batches.join("\n")).then(() => {
-            status.textContent = "ミスミの入力データをコピーしました。「エクセルから一括コピー」欄へ貼り付けてください。";
+            status.textContent = "コピーしました。「エクセルから一括コピー」欄へ貼り付けてください。";
           }).catch((caught: unknown) => {
             status.textContent = caught instanceof Error ? caught.message : "コピーできませんでした。";
           });
         });
-        guidance.textContent =
-          "型番・数量・メーカー名をコピーして公式画面を開きます。「エクセルから一括コピー」欄へ一度貼り付けてください。Cart2BOM導入済みならバスケットへの追加まで自動で進めます。";
+        guidance.textContent = "型番・数量・メーカー名を「エクセルから一括コピー」欄へ貼り付けてください。";
         actions.append(proceed);
       } else if (adapter.id !== "monotaro") {
         batches.forEach((batch, index) => {
           const copy = button(
             targetDocument,
-            batches.length === 1 ? "一括入力データをコピー" : `${index + 1}回目の入力データをコピー`,
+            batches.length === 1 ? "入力データをコピー" : `${index + 1}回目をコピー`,
           );
           copy.addEventListener("click", () => {
             void copyText(targetDocument, batch).then(() => {
@@ -379,7 +380,8 @@ export function renderInstallPage(targetDocument: Document, root: HTMLElement): 
       targetDocument,
       "p",
       "viewer-install-lead",
-      "通販サイトのカートを、保存・共有できる部品リストへ。2つの手順でインストールできます。",
+      // 手順は画面に3つ並ぶため、本文で件数を言わない。
+      "通販サイトのカートを、保存・共有できる部品リストへ変換します。",
     ),
   );
   const badges = element(targetDocument, "div", "viewer-install-badges");
@@ -576,7 +578,7 @@ export function renderSharedListPage(
       targetDocument,
       "p",
       undefined,
-      "Cart2BOMをインストール済みの場合は、リスト全体をブラウザへ取り込んでカートへの自動追加に利用できます。",
+      "Cart2BOM導入済みなら、リストを保存して後からカートへ戻せます。",
     );
     const importLink = element(targetDocument, "a", "viewer-button viewer-button-primary", "Cart2BOMへ取り込む");
     const destination = new URL(cartUrl);
