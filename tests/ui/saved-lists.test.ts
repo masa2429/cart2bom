@@ -61,6 +61,39 @@ describe("openSavedLists", () => {
     expect(image?.alt).toBe("画像付き商品");
   });
 
+  it("最後の1件を削除したら空状態へ切り替える", async () => {
+    const onDelete = vi.fn(async () => undefined);
+    const actions: SavedListActions = {
+      confirmBeforeDelete: true,
+      onOpen: vi.fn(),
+      onDuplicate: vi.fn(async () => undefined),
+      onRename: vi.fn(async () => undefined),
+      onDelete,
+      onExport: vi.fn(),
+      onCopyPlainText: vi.fn(async () => undefined),
+      onCopyShareUrl: vi.fn(async () => undefined),
+      onCopyQuickOrder: vi.fn(async () => undefined),
+      onOpenQuickOrder: vi.fn(async () => undefined),
+    };
+
+    openSavedLists(document, [list], actions);
+    Array.from(document.querySelectorAll("button")).find((node) => node.textContent === "削除")?.click();
+
+    // Confirmation now uses Cart2BOM's own dialog instead of window.confirm.
+    await vi.waitFor(() => {
+      expect(Array.from(document.querySelectorAll("button")).some((node) => node.textContent === "削除する"))
+        .toBe(true);
+    });
+    Array.from(document.querySelectorAll("button")).find((node) => node.textContent === "削除する")?.click();
+
+    await vi.waitFor(() => {
+      expect(onDelete).toHaveBeenCalledOnce();
+      expect(document.querySelectorAll(".cart2bom-list-card")).toHaveLength(0);
+      expect(document.querySelector(".cart2bom-empty-state")?.textContent)
+        .toBe("この店舗の商品を含む保存済みリストはありません。");
+    });
+  });
+
   it("読み取れない保存データの件数とバックアップ導線を表示する", () => {
     const onBackupBroken = vi.fn();
     const actions: SavedListActions = {

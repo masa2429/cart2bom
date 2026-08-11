@@ -78,6 +78,19 @@ describe("Cart2BOM app flow", () => {
     });
   });
 
+  it("メニューの開閉にあわせてaria-expandedを更新する", async () => {
+    installMemoryGm(new Map<string, unknown>());
+    startCart2BOM();
+    const launcher = document.getElementById("cart2bom-floating-button");
+    expect(launcher?.getAttribute("aria-expanded")).toBe("false");
+
+    launcher?.click();
+    expect(launcher?.getAttribute("aria-expanded")).toBe("true");
+
+    document.querySelector<HTMLButtonElement>(".cart2bom-icon-button")?.click();
+    expect(launcher?.getAttribute("aria-expanded")).toBe("false");
+  });
+
   it("同一通販コードの行を1行へまとめ、数量を合算する", async () => {
     installMemoryGm(new Map<string, unknown>());
     const row = document.querySelector("tr.block-cart--goods-list");

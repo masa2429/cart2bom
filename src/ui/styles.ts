@@ -221,6 +221,8 @@ export const CART2BOM_STYLES = `
 .cart2bom-action-menu summary::-webkit-details-marker { display: none; }
 .cart2bom-action-menu[open] > summary { border-color: #5d8db7; color: #1559a6; background: #eef6fd; box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.09); }
 .cart2bom-action-menu-panel { position: absolute; right: 0; bottom: calc(100% + 7px); z-index: 3; display: grid; min-width: 220px; gap: 4px; border: 1px solid #d5dde6; border-radius: 11px; padding: 7px; background: #ffffff; box-shadow: 0 14px 38px rgba(20, 35, 55, 0.18); }
+/* Opens downward when the panel would be clipped by the top of the modal. */
+.cart2bom-action-menu[data-drop="down"] .cart2bom-action-menu-panel { top: calc(100% + 7px); bottom: auto; }
 .cart2bom-action-menu-panel .cart2bom-button { width: 100%; min-height: 37px; border-color: transparent; justify-content: flex-start; text-align: left; white-space: nowrap; box-shadow: none; }
 .cart2bom-action-menu-panel .cart2bom-button-danger { color: #a92620; }
 
@@ -240,7 +242,26 @@ export const CART2BOM_STYLES = `
 .cart2bom-list-images { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 11px; }
 .cart2bom-product-image { display: block; width: 64px; height: 64px; border: 1px solid #dce3eb; border-radius: 9px; background: #ffffff; object-fit: contain; }
 
-.cart2bom-toast { position: fixed; right: 20px; bottom: 78px; z-index: 2147483002; max-width: min(420px, calc(100vw - 40px)); border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 11px; padding: 13px 16px; color: #ffffff; background: #233044; box-shadow: 0 12px 32px rgba(15, 28, 44, 0.3); font: 650 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans JP", sans-serif; }
+.cart2bom-toast-stack { position: fixed; right: 20px; bottom: 78px; z-index: 2147483002; display: flex; flex-direction: column; gap: 8px; align-items: flex-end; pointer-events: none; }
+.cart2bom-toast { max-width: min(420px, calc(100vw - 40px)); border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 11px; padding: 13px 16px; color: #ffffff; background: #233044; box-shadow: 0 12px 32px rgba(15, 28, 44, 0.3); font: 650 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans JP", sans-serif; }
+
+.cart2bom-busy {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483003;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(18, 28, 42, 0.56);
+  backdrop-filter: blur(5px);
+  font: 14px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans JP", sans-serif;
+}
+.cart2bom-busy-panel { display: grid; justify-items: center; gap: 12px; width: min(400px, calc(100vw - 32px)); border-radius: 16px; padding: 26px 24px; color: #172033; background: #ffffff; box-shadow: 0 24px 70px rgba(9, 22, 38, 0.34); text-align: center; }
+.cart2bom-busy-spinner { display: block; width: 34px; height: 34px; border: 3px solid #d8e2ec; border-top-color: #1976d2; border-radius: 50%; animation: cart2bom-spin 800ms linear infinite; }
+.cart2bom-busy-message { margin: 0; font-size: 15px; font-weight: 750; }
+.cart2bom-busy-note { margin: 0; color: #657387; font-size: 12px; }
+@keyframes cart2bom-spin { to { transform: rotate(360deg); } }
 .cart2bom-import-intro { margin: 0 0 14px; color: #59677a; }
 .cart2bom-file-field { display: grid; gap: 7px; border: 1px dashed #b9c8d7; border-radius: 11px; padding: 14px; color: #42526a; background: #f7fafc; font-size: 12px; font-weight: 750; }
 .cart2bom-file-field input { font: inherit; }
@@ -326,6 +347,10 @@ export const CART2BOM_STYLES = `
 :root[data-cart2bom-theme="dark"] .cart2bom-store-counts li { color: #b9dbf5; background: #203c54; }
 :root[data-cart2bom-theme="dark"] .cart2bom-notice { border-color: #55a5eb; color: #b5c2d1; background: #18232f; }
 :root[data-cart2bom-theme="dark"] .cart2bom-overlay a:not(.cart2bom-button) { color: #77baf2; }
+:root[data-cart2bom-theme="dark"] .cart2bom-busy { background: rgba(4, 9, 16, 0.76); }
+:root[data-cart2bom-theme="dark"] .cart2bom-busy-panel { color: #e8eef6; background: #131b26; box-shadow: 0 24px 74px rgba(0, 0, 0, 0.58); }
+:root[data-cart2bom-theme="dark"] .cart2bom-busy-spinner { border-color: #36455a; border-top-color: #55a5eb; }
+:root[data-cart2bom-theme="dark"] .cart2bom-busy-note { color: #a5b2c1; }
 
 @media (max-width: 700px) {
   .cart2bom-overlay { align-items: flex-end; padding: 10px; }
@@ -346,5 +371,6 @@ export const CART2BOM_STYLES = `
 
 @media (prefers-reduced-motion: reduce) {
   #${FLOATING_BUTTON_ID}, .cart2bom-button { transition: none; }
+  .cart2bom-busy-spinner { animation-duration: 2400ms; }
 }
 `;

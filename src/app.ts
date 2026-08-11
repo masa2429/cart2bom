@@ -25,11 +25,12 @@ import { exportPlainText } from "./exporters/plain-text";
 import { exportQuickOrder, exportQuickOrderBatches } from "./exporters/quick-order";
 import { exportTsv } from "./exporters/tsv";
 import { GMStorageProvider } from "./storage/gm-storage";
+import { showBusy } from "./ui/busy";
 import { openCartEditor, type CartEditorValue } from "./ui/cart-editor";
 import { mountFloatingButton } from "./ui/floating-button";
 import { openImportDialog } from "./ui/import-dialog";
 import { openMainMenu } from "./ui/main-menu";
-import { createButton, openModal, showMessage } from "./ui/modal";
+import { createButton, openConfirm, openModal, showMessage } from "./ui/modal";
 import { filterSavedListsByStore, openSavedLists } from "./ui/saved-lists";
 import { openSettings } from "./ui/settings";
 import { openSharedListDialog } from "./ui/shared-list-dialog";
@@ -50,12 +51,18 @@ export function startCart2BOM(): void {
   let settings: AppSettings = { ...DEFAULT_SETTINGS };
   applyCart2BOMTheme(document, settings.theme);
 
+  const confirmOverwrite = (error: DuplicateListNameError): Promise<boolean> =>
+    openConfirm(document, "同名のリストがあります", {
+      message: `${error.message}\n上書きしますか？`,
+      confirmLabel: "上書きする",
+    });
+
   const saveNewList = async (value: CartEditorValue): Promise<void> => {
     try {
       await listService.create(value);
     } catch (error) {
       if (!(error instanceof DuplicateListNameError)) throw error;
-      if (!window.confirm(`${error.message}\n上書きしますか？`)) throw new Error("保存をキャンセルしました。");
+      if (!await confirmOverwrite(error)) throw new Error("保存をキャンセルしました。");
       await listService.create(value, true);
     }
     showToast(document, "リストを保存しました。");
@@ -66,7 +73,7 @@ export function startCart2BOM(): void {
       await listService.importList(list);
     } catch (error) {
       if (!(error instanceof DuplicateListNameError)) throw error;
-      if (!window.confirm(`${error.message}\n上書きしますか？`)) throw new Error("インポートをキャンセルしました。");
+      if (!await confirmOverwrite(error)) throw new Error("インポートをキャンセルしました。");
       await listService.importList(list, true);
     }
     showToast(document, "リストをインポートしました。");
@@ -83,7 +90,7 @@ export function startCart2BOM(): void {
           await listService.update(updated);
         } catch (error) {
           if (!(error instanceof DuplicateListNameError)) throw error;
-          if (!window.confirm(`${error.message}\n上書きしますか？`)) throw new Error("保存をキャンセルしました。");
+          if (!await confirmOverwrite(error)) throw new Error("保存をキャンセルしました。");
           await listService.update(updated, true);
         }
         showToast(document, "リストを保存しました。");
@@ -195,7 +202,9 @@ export function startCart2BOM(): void {
   };
 
   const openMenu = (): void => {
+    button.setAttribute("aria-expanded", "true");
     openMainMenu(document, {
+      onClose: () => button.setAttribute("aria-expanded", "false"),
       storeName: adapter.name,
       onReadCart: async () => {
         const currentUrl = new URL(window.location.href);
@@ -203,8 +212,12 @@ export function startCart2BOM(): void {
           showMessage(document, "カートページではありません", "買い物カゴのページを開いてから実行してください。");
           return;
         }
+        // MISUMI waits several seconds for prices, so show progress before then.
+        const busy = showBusy(document, `${adapter.name}のカートを読み取っています…`);
+        let result;
         try {
           await adapter.prepareCart?.(document);
+          result = adapter.extractCart(document);
         } catch (error) {
           showMessage(
             document,
@@ -212,8 +225,9 @@ export function startCart2BOM(): void {
             error instanceof Error ? error.message : "価格と出荷日の取得に失敗しました。",
           );
           return;
+        } finally {
+          busy.close();
         }
-        const result = adapter.extractCart(document);
         if (__CART2BOM_DEVELOPMENT__) {
           console.debug("[Cart2BOM] extraction", {
             adapter: adapter.id,
@@ -313,6 +327,11 @@ export function startCart2BOM(): void {
       }
       if (!isQuickOrderPage || pending.phase === "submitted") return;
       const batch = lines.slice(0, adapter.quickOrderCapacity ?? lines.length);
+      // Each MISUMI step waits up to 20 seconds, so the page must not look idle.
+      const busy = showBusy(
+        document,
+        `${batch.length}商品を${adapter.name}のバスケットへ追加しています…`,
+      );
       try {
         await savePendingQuickOrder(storage, {
           ...pending,
@@ -328,6 +347,8 @@ export function startCart2BOM(): void {
           "バスケットへ自動追加できませんでした",
           error instanceof Error ? error.message : "クイックオーダーを送信できませんでした。",
         );
+      } finally {
+        busy.close();
       }
       return;
     }

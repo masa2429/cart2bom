@@ -6,11 +6,12 @@ export interface MainMenuActions {
   onSavedLists(): void;
   onImport(): void;
   onSettings(): void;
+  onClose?(): void;
 }
 
 export function openMainMenu(targetDocument: Document, actions: MainMenuActions): void {
   if (targetDocument.querySelector(".cart2bom-overlay")) return;
-  const modal = openModal(targetDocument, "Cart2BOM");
+  const modal = openModal(targetDocument, "Cart2BOM", { onClose: actions.onClose });
   const store = targetDocument.createElement("p");
   store.className = "cart2bom-store-context";
   store.textContent = `対象サイト：${actions.storeName}`;

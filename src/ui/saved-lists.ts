@@ -1,6 +1,6 @@
 import type { SavedList } from "../core/models";
 import { calculateListTotal, formatListTotal } from "../core/totals";
-import { createButton, openModal } from "./modal";
+import { createButton, openConfirm, openModal, openPrompt } from "./modal";
 import { createProductImage } from "./product-image";
 
 export interface SavedListActions {
@@ -43,6 +43,10 @@ function createActionMenu(
     for (const other of targetDocument.querySelectorAll<HTMLDetailsElement>(".cart2bom-action-menu[open]")) {
       if (other !== details) other.open = false;
     }
+    // The panel opens upward by default; flip it when the modal would clip it.
+    const scroller = details.closest(".cart2bom-modal");
+    const available = summary.getBoundingClientRect().top - (scroller?.getBoundingClientRect().top ?? 0);
+    details.dataset.drop = available > 0 && available < panel.offsetHeight + 16 ? "down" : "up";
   });
   return { details, panel };
 }
@@ -75,11 +79,14 @@ export function openSavedLists(
       modal.content.append(backup);
     }
   }
-  if (lists.length === 0) {
+  const createEmptyState = (): HTMLParagraphElement => {
     const empty = targetDocument.createElement("p");
     empty.className = "cart2bom-empty-state";
     empty.textContent = "この店舗の商品を含む保存済みリストはありません。";
-    modal.content.append(empty);
+    return empty;
+  };
+  if (lists.length === 0) {
+    modal.content.append(createEmptyState());
     return;
   }
   const container = targetDocument.createElement("div");
@@ -107,7 +114,11 @@ export function openSavedLists(
     open.addEventListener("click", () => { modal.close(); actions.onOpen(list); });
     const rename = createButton(targetDocument, "名前変更");
     rename.addEventListener("click", async () => {
-      const next = window.prompt("新しいリスト名", list.name)?.trim();
+      const next = await openPrompt(targetDocument, "リスト名を変更", {
+        label: "新しいリスト名",
+        value: list.name,
+        confirmLabel: "変更",
+      });
       if (!next || next === list.name) return;
       try { await actions.onRename(list, next); title.textContent = next; list.name = next; }
       catch (error) { status.textContent = error instanceof Error ? error.message : "名前変更に失敗しました。"; }
@@ -119,9 +130,22 @@ export function openSavedLists(
     });
     const remove = createButton(targetDocument, "削除", "danger");
     remove.addEventListener("click", async () => {
-      if (actions.confirmBeforeDelete && !window.confirm(`「${list.name}」を削除しますか？`)) return;
-      try { await actions.onDelete(list); card.remove(); }
-      catch (error) { status.textContent = error instanceof Error ? error.message : "削除に失敗しました。"; }
+      if (actions.confirmBeforeDelete) {
+        const confirmed = await openConfirm(targetDocument, "リストを削除", {
+          message: `「${list.name}」を削除します。元に戻せません。`,
+          confirmLabel: "削除する",
+          danger: true,
+        });
+        if (!confirmed) return;
+      }
+      try {
+        await actions.onDelete(list);
+        card.remove();
+        // Without this the modal would show an empty area after the last card.
+        if (container.childElementCount === 0) container.replaceWith(createEmptyState());
+      } catch (error) {
+        status.textContent = error instanceof Error ? error.message : "削除に失敗しました。";
+      }
     });
     const exportMenu = createActionMenu(targetDocument, "出力");
     const shareUrl = createButton(targetDocument, "共有URLをコピー");
