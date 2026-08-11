@@ -69,15 +69,22 @@ export function openSavedLists(
   status.className = "cart2bom-error";
   status.setAttribute("role", "alert");
   if (actions.brokenCount) {
+    // Grouped so the notice, its action and the list below keep their spacing.
+    const panel = targetDocument.createElement("section");
+    panel.className = "cart2bom-broken-data";
     const notice = targetDocument.createElement("p");
     notice.className = "cart2bom-notice";
     notice.textContent = `読み取れない保存データが${actions.brokenCount}件あります。削除はしていません。他のリストはそのまま利用できます。`;
-    modal.content.append(notice);
+    panel.append(notice);
     if (actions.onBackupBroken) {
+      const backupActions = targetDocument.createElement("div");
+      backupActions.className = "cart2bom-actions";
       const backup = createButton(targetDocument, "読み取れないデータをJSON保存");
       backup.addEventListener("click", () => actions.onBackupBroken?.());
-      modal.content.append(backup);
+      backupActions.append(backup);
+      panel.append(backupActions);
     }
+    modal.content.append(panel);
   }
   const createEmptyState = (): HTMLParagraphElement => {
     const empty = targetDocument.createElement("p");

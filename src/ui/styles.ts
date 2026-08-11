@@ -276,6 +276,8 @@ export const CART2BOM_STYLES = `
 .cart2bom-store-counts { display: flex; flex-wrap: wrap; gap: 7px; margin: 12px 0 0; padding: 0; list-style: none; }
 .cart2bom-store-counts li { border-radius: 999px; padding: 5px 9px; color: #315274; background: #e8f1f9; font-size: 12px; font-weight: 700; }
 .cart2bom-notice { margin: 14px 0 0; border-left: 3px solid #4c8cc7; padding: 8px 11px; color: #4c5d70; background: #f7fafc; }
+.cart2bom-broken-data { display: block; margin: 0 0 18px; }
+.cart2bom-broken-data .cart2bom-notice { margin-top: 0; }
 .cart2bom-overlay a:not(.cart2bom-button) { color: #1559a6; text-underline-offset: 2px; }
 
 :root[data-cart2bom-theme="dark"] #${FLOATING_BUTTON_ID} {
