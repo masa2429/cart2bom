@@ -9,7 +9,10 @@
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans JP", sans-serif;
   font-synthesis: none;
 }
-* { box-sizing: border-box; }
+/* Pseudo-elements are not matched by `*`, so they need to be listed. Without
+   this the step markers keep their 8px of border outside the declared size and
+   sit off-centre against the connector line. */
+*, *::before, *::after { box-sizing: border-box; }
 body { margin: 0; min-width: 320px; background: radial-gradient(circle at 50% 0, #f9fbfe 0, #f3f6fa 42%, #eef3f8 100%); }
 a { color: #1559a6; }
 button, a { -webkit-tap-highlight-color: transparent; }
@@ -18,8 +21,12 @@ button:focus-visible, a:focus-visible, input:focus-visible, summary:focus-visibl
 .viewer-brand { display: inline-flex; align-items: center; gap: 9px; color: #172033; font-size: 22px; font-weight: 800; text-decoration: none; }
 .viewer-brand-mark { display: inline-grid; width: 30px; height: 30px; place-items: center; border-radius: 9px; color: #fff; background: linear-gradient(145deg, #2687df, #155eaa); box-shadow: 0 4px 10px rgba(21, 94, 170, 0.18); }
 .viewer-brand-mark svg { width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-.viewer-nav { display: flex; gap: 20px; }
-.viewer-nav-link { position: relative; padding: 21px 0 19px; color: #59677a; font-weight: 650; text-decoration: none; }
+/* Full-height links keep the active underline on the header's bottom edge and
+   centre the label without hand-tuned asymmetric padding. */
+.viewer-nav { display: flex; align-self: stretch; gap: 20px; }
+.viewer-nav-link { position: relative; display: inline-flex; align-items: center; color: #59677a; font-weight: 650; text-decoration: none; }
+/* Inset so the ring stays inside the header instead of crossing its border. */
+.viewer-nav-link:focus-visible { border-radius: 7px; outline-offset: -3px; }
 .viewer-nav-link:hover { color: #1559a6; }
 .viewer-nav-link-active { color: #1559a6; }
 .viewer-nav-link-active::after { position: absolute; right: 0; bottom: 0; left: 0; height: 3px; border-radius: 3px 3px 0 0; background: #1976d2; content: ""; }
@@ -37,7 +44,11 @@ button:focus-visible, a:focus-visible, input:focus-visible, summary:focus-visibl
 .viewer-total { margin: 18px 0 0; font-size: 20px; font-weight: 800; }
 .viewer-status { min-height: 1.5em; margin: 12px 0 0; color: #315274; font-weight: 600; }
 .viewer-toolbar, .viewer-button-row { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 18px; }
-.viewer-button { display: inline-flex; align-items: center; justify-content: center; min-height: 42px; border: 1px solid #9eacbc; border-radius: 9px; padding: 9px 14px; color: #26364a; background: #fff; box-shadow: 0 1px 2px rgba(25, 40, 60, 0.04); font: 700 14px/1.25 inherit; text-decoration: none; cursor: pointer; transition: border-color 130ms ease, background 130ms ease, box-shadow 130ms ease, transform 130ms ease; }
+/* Written as longhands on purpose: `font: 700 14px/1.25 inherit` is invalid,
+   so the whole declaration used to be dropped. Buttons then fell back to the UA
+   font while link-buttons inherited the page font, leaving the two visibly
+   different in size, weight and height inside the same row. */
+.viewer-button { display: inline-flex; align-items: center; justify-content: center; min-height: 42px; border: 1px solid #9eacbc; border-radius: 9px; padding: 9px 14px; color: #26364a; background: #fff; box-shadow: 0 1px 2px rgba(25, 40, 60, 0.04); font-family: inherit; font-size: 14px; font-weight: 700; line-height: 1.25; text-align: center; text-decoration: none; cursor: pointer; transition: border-color 130ms ease, background 130ms ease, box-shadow 130ms ease, transform 130ms ease; }
 .viewer-button:hover { border-color: #5c82a7; background: #f3f8fc; box-shadow: 0 4px 11px rgba(31, 75, 115, 0.09); }
 .viewer-button:active { transform: translateY(1px); }
 .viewer-button:disabled { opacity: 0.5; cursor: wait; transform: none; }
@@ -52,8 +63,11 @@ button:focus-visible, a:focus-visible, input:focus-visible, summary:focus-visibl
 .viewer-item-card { display: grid; grid-template-columns: 34px 112px minmax(0, 1fr); gap: 18px; border: 1px solid #dce3eb; border-radius: 14px; padding: 18px; background: #fff; box-shadow: 0 4px 14px rgba(40, 62, 90, 0.045); transition: border-color 150ms ease, box-shadow 150ms ease, transform 150ms ease; }
 .viewer-item-card:hover { border-color: #c5d4e2; box-shadow: 0 9px 24px rgba(40, 62, 90, 0.075); transform: translateY(-1px); }
 .viewer-item-card[hidden] { display: none; }
-.viewer-item-selection { padding-top: 7px; }
-.viewer-item-selection input { width: 20px; height: 20px; accent-color: #1976d2; }
+/* Centres the checkbox on the store badge, the card's first line of content.
+   `align-self: start` is required: without it the grid item stretches to the
+   whole card and the checkbox drifts to the vertical middle of the row. */
+.viewer-item-selection { display: flex; align-self: start; align-items: center; min-height: 25px; }
+.viewer-item-selection input { width: 20px; height: 20px; margin: 0; accent-color: #1976d2; }
 .viewer-item-media { display: grid; width: 112px; height: 112px; place-items: center; overflow: hidden; border: 1px solid #e1e6ec; border-radius: 11px; color: #7b8798; background: linear-gradient(145deg, #fff, #f7f9fb); font-size: 12px; }
 .viewer-item-media img { display: block; max-width: 100px; max-height: 100px; object-fit: contain; }
 .viewer-item-content { min-width: 0; }
@@ -77,6 +91,10 @@ button:focus-visible, a:focus-visible, input:focus-visible, summary:focus-visibl
 .viewer-sidebar .viewer-store-actions { margin-top: 0; }
 .viewer-sidebar .viewer-section-title { font-size: 20px; }
 .viewer-sidebar .viewer-button-row > * { flex: 1 1 135px; }
+/* Buttons stretch to match their tallest neighbour on a flex line, so the copy
+   guide must take a line of its own. Otherwise a button beside the open guide
+   is dragged to the guide's height and renders as a tall empty block. */
+.viewer-sidebar .viewer-button-row > .viewer-copy-guide { flex: 1 1 100%; }
 .viewer-sidebar .viewer-import-panel .viewer-button { width: 100%; }
 .viewer-sidebar .viewer-store-panel { padding: 14px; }
 .viewer-sidebar .viewer-store-panel .viewer-button { width: 100%; }
@@ -115,7 +133,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, summary:focus-visibl
 .viewer-install-steps { position: relative; display: grid; gap: 0; margin: 34px 0 0; padding: 0; list-style: none; counter-reset: install-step; }
 .viewer-install-step { position: relative; margin-left: 19px; border-left: 2px solid #d5e4f2; padding: 0 0 30px 49px; counter-increment: install-step; }
 .viewer-install-step:last-child { border-left-color: transparent; padding-bottom: 4px; }
-.viewer-install-step::before { position: absolute; top: -2px; left: -20px; z-index: 1; display: grid; width: 38px; height: 38px; place-items: center; border: 4px solid #fff; border-radius: 50%; color: #fff; background: #1976d2; content: counter(install-step); font-size: 14px; font-weight: 800; box-shadow: 0 0 0 1px #bcd4e8; }
+.viewer-install-step::before { position: absolute; top: -3px; left: -20px; z-index: 1; display: grid; width: 38px; height: 38px; place-items: center; border: 4px solid #fff; border-radius: 50%; color: #fff; background: #1976d2; content: counter(install-step); font-size: 14px; font-weight: 800; box-shadow: 0 0 0 1px #bcd4e8; }
 .viewer-install-step-ready::before { color: #17633b; background: #e6f5ec; box-shadow: 0 0 0 1px #b9ddc7; }
 .viewer-install-step h2 { margin: 0 0 6px; padding-top: 3px; font-size: 20px; line-height: 1.45; }
 .viewer-install-step p { max-width: 570px; margin: 0 0 13px; line-height: 1.7; }
