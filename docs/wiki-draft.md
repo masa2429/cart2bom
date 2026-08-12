@@ -20,7 +20,7 @@ https://www.monotaro.com/p/7410/9246/?t.q=はんだ熱収縮
 https://www.monotaro.com/p/4781/2670/
 ```
 
-この形式は、双方に作業を残す。
+この形式は、部品を選ぶ側と発注する側の双方に作業を残す。
 
 部品を選ぶ側の作業：
 
@@ -45,7 +45,7 @@ https://www.monotaro.com/p/4781/2670/
 
 確認画面に、商品画像、通販コード、商品名、メーカーと型番、販売単位、数量、単価と小計、合計金額が並ぶ。
 名前と URL を写す作業はない。
-販売単位は「1パック(100個)」、数量は「1」と別の欄に読み取られるので、「100個入 ×1」のような書き分けも、その解釈も要らなくなる。
+販売単位は「1パック(100個)」、数量は「1」と別の欄に読み取られるので、「100個入 ×1」のような書き分けも、その解釈も不要になる。
 数量はこの画面で直せて、合計も計算し直される。
 
 ![カート読み取りの確認画面](images/cart2bom-read-result.png)
@@ -59,14 +59,13 @@ https://www.monotaro.com/p/4781/2670/
 
 届くのは [このような URL](https://masa2429.github.io/cart2bom/share/#cart2bom=g.H4sIAAAAAAAACqWTXWsTQRSG_8pyrlKYzc7Mfu-lRfBCUWq9CrkoJtSUbBJsNIII6Q7SktCGarGilWAkVkhsoxH6YTQ_5rCb9F_IbAxiL1IlFzuwzJlz3veZd57CY_AYgQJ4gKKFYgeDIYrPGHzEoINigGJL4ZRbKnVUxhTOPcMGAhnwAAiUwUulCeTAS6XALxaK5ZWHRSCXWwEB23QNqtsGEIj229FBNy7pohAYHGNwlvCL-eyTBSBgMtO9c235JhC4ePt9dPImPP4ZNs-jd8PR3icM-ii24yNDhSdN30exJ5uIDSUeN0DRRFFD0VFkIyDAUOxOxiQYpWG1vgCEEdt14w8elMuldU_TKpVKcuogeb_oayVNatakaA3-1K2Vkjl_ZTW7rv5Vfev3j66Vcpqfy2TyWU0WTH2rXKcGoyrlybXSKpDCo3yeQPjjZbTfDjfPx9snQADS5AqM1DEtalnWP2CkJlOp_v8URSO-_FMUfQx6iuxzmeIEok645RKH2jMhSsWalDwHxKnrGCI15oVoG4y63JAQF-_dXb69lJjAQ7GFYiDh3bjOdaouscX4fEOiENXweRuD2sXrr1HvW1Q9DBs7o9MjFBso2nHuXklM41Y9wWh00I1TxqjrTJaZOTMY1aSgeXIWe9JtlTPGqTUvIsN2GLdsKnPW742_1GI23djnJgYfJuGQhk1DPjIMWig6KJrhWX98-GJ09F7uhdW6pMAN15kssyjIkZqcOQeFqWyV64zyK4OSfvYLLRfdAAAFAAA) ひとつである。
 開くと、Cart2BOM を入れていなくても、画像付きの一覧と合計金額が表示される。
-金額を自分で合計する作業はない。
 
 注文するときは、共有画面の「店舗で注文する」から注文コードと数量をコピーして、公式のクイックオーダーへ貼り付ける。
 URL を順に開いてカートへ入れ直す必要はない。
-発注する側も Cart2BOM を入れているなら、バスケットへの追加まで自動で進む。
+発注する側も Cart2BOM を導入していれば、バスケットへの追加まで自動で進む。
 記録に残すなら、共有画面から CSV でも保存できる。
 
-URL より文章がよければ、「出力」の「平文をコピー」でこのような文章を貼れる。
+URL ではなく文章で渡したい場合は、「出力」の「平文をコピー」を使う。
 
 ```text
 モノタロウカート 2026-08-11 22:47
